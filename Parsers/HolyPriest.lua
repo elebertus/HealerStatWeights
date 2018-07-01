@@ -15,7 +15,7 @@ end
 		- calculated from echo of light healing
 ------------------------------------------------------------------------------]]
 local function _Mastery(ev,spellInfo,heal,destUnit,M)
-	if ( spellInfo.spellID == 77489 ) then --echo of light healing
+	if ( spellInfo.spellID == addon.HolyPriest.EchoOfLight ) then --echo of light healing
 		if ( M == 0 ) then
 			return 0;
 		end

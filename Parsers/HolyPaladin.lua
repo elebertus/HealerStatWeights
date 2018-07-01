@@ -14,11 +14,12 @@ end
 local vindicator = 200376;
 local avengingWrath = 31842;
 local ruleOfLaw = 214202;
-local holyShock = 20473;
+local purityOfLight = 254332;
 
-addon.BuffTracker:Track(ruleOfLaw,nil,nil);  --ruleOfLaw
-addon.BuffTracker:Track(vindicator,nil,nil);  --vindicator (+25% CE)
-addon.BuffTracker:Track(avengingWrath,nil,nil);  --avenging wrath (+20% crit)
+addon.BuffTracker:Track(purityOfLight);
+addon.BuffTracker:Track(ruleOfLaw);  --ruleOfLaw
+addon.BuffTracker:Track(vindicator);  --vindicator (+25% CE)
+addon.BuffTracker:Track(avengingWrath);  --avenging wrath (+20% crit)
 
 
 
@@ -74,15 +75,27 @@ end
 		- Crit chance doubled for holy shock
 ------------------------------------------------------------------------------]]
 local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)		
+	--vindicator
 	if ( addon.BuffTracker:Get(vindicator) > 0 ) then
 		CB = CB * 1.25;
 	end
 	
+	--t21 4p
+	if ( addon.BuffTracker:Get(purityOfLight) > 0 ) then
+		if ( spellInfo.spellID == addon.Paladin.HolyLight or
+			 spellInfo.spellID == addon.Paladin.LightOfDawn or
+			 spellInfo.spellID == addon.Paladin.FlashOfLight) then
+			CB = CB * 2;
+		end
+	end
+
+	--wings
 	if ( addon.BuffTracker:Get(avengingWrath) > 0 ) then
 		C = C + 0.20;
 	end
 	
-	if ( spellInfo.spellID == holyShock) then --holy shock
+	--holy shock
+	if ( spellInfo.spellID == addon.Paladin.HolyShock ) then
 		C = C * 2;
 	end
 
@@ -166,51 +179,7 @@ end
 	healEvent 
 	- Track healing that feeds beacons
 ------------------------------------------------------------------------------]]
-local Queue = {};
-function Queue.Create()
-	local t = {};
-	t.front = 0;
-	t.back = 0;
-	t.Enqueue = function(self,event)
-		self.front = self.front+1;
-		self[self.front] = event;
-	end;
-	t.Dequeue = function(self)
-		if ( self:Size() > 0 ) then
-			self.back = self.back + 1;
-			local event = self[self.back];
-			--self[self.back] = nil;
-			return event;
-		end
-	end;
-	t.MatchHeal = function(self)
-		local event = true;
-		while ( self:Size() > 0 and event) do 
-			event = self:Dequeue();
-			if ( event ) then
-				if ( math.abs(event.ts - GetTime()) <= 0.3333 ) then -- within 1/3 of a second
-					return event;
-				end
-			end
-		end
-		return nil;
-	end
-	t.Size = function(self)
-		return self.front - self.back;
-	end
-	return t;
-end
-
-local beaconHeals = Queue.Create();
-
---shallow table copy
-local function copy(t) 
-	local new_t = {};
-	local mt = getmetatable(t);
-	for k,v in pairs(t) do new_t[k] = v; end
-	setmetatable(new_t,mt);
-	return new_t;
-end
+local beaconHeals = addon.SpellQueue.Create(getMasteryEffect);
 
 local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 	if ( spellInfo.transfersToBeacon ) then
@@ -218,22 +187,8 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		if ( addon.BeaconUnits[UnitGUID(destUnit)] ) then
 			numBeacons = math.max(numBeacons - 1,0);
 		end
-		
-		local event = {
-			ts = GetTime(),
-			ME = getMasteryEffect(destUnit),
-			C = addon.ply_crt,
-			SP = addon.ply_sp,
-			H = addon.ply_hst,
-			M = addon.ply_mst,
-			V = addon.ply_vrs,
-			L = addon.ply_lee
-		};
-		
-		for i=1,numBeacons,1 do
-			beaconHeals:Enqueue(copy(event));
-		end
-	elseif (spellInfo.spellID == addon.BeaconOfLight) then
+		beaconHeals:Enqueue(numBeacons,destUnit);
+	elseif (spellInfo.spellID == addon.Paladin.BeaconOfLight) then
 		local event = beaconHeals:MatchHeal();
 		
 		if ( event ) then

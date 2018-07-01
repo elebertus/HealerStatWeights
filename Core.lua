@@ -242,6 +242,8 @@ function hsw:ChatCommand(input)
 	elseif ( lwr_input == "debug" ) then
 		local seg = addon.SegmentManager:Get(addon.currentSegment);
 		if ( seg ) then seg:Debug() end
+	elseif (lwr_input == "start" ) then
+		addon:StartFight("test");
 	end
 end
 

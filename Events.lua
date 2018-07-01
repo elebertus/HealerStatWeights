@@ -112,7 +112,7 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 		
 			--Track mana gained by resurgence
 			if ( ev == "SPELL_ENERGIZE" ) then
-				if ( spellID == addon.ShamanResurgence ) then
+				if ( spellID == addon.Shaman.Resurgence ) then
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					

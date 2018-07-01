@@ -1,10 +1,6 @@
 local name, addon = ...;
 
 
-addon.BuffTracker:Track(207383) --abundance
-
-
-
 
 function addon:IsRestoDruid()
     local i = GetSpecialization();
@@ -18,16 +14,16 @@ end
 	hotCount() - get the resto druid mastery effect (hotcount)
 ------------------------------------------------------------------------------]]
 local hots = { --spells that count towards druid mastery stacks
-	[157982]=true,
-	[774]=true,
-	[155777]=true,
-	[33763]=true,
-	[8936]=true, --regrowth
-	[48438]=true,
-	[207386]=true,
-	[200389]=true,
-	[102352]=true,
-	[253432]=true
+	[addon.Druid.TranquilityHoT]=true,
+	[addon.Druid.Rejuvenation]=true,
+	[addon.Druid.Germination]=true,
+	[addon.Druid.LifebloomHoT]=true,
+	[addon.Druid.Regrowth]=true, --regrowth
+	[addon.Druid.WildGrowth]=true,
+	[addon.Druid.SpringBlossoms]=true,
+	[addon.Druid.Cultivation]=true,
+	[addon.Druid.CenarionWard]=true,
+	[addon.Druid.DreamerHoT]=true
 }
 
 local function hotCount(unit)
@@ -59,8 +55,8 @@ end
 ------------------------------------------------------------------------------]]
 local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)
 	
-	if ( spellInfo.spellID == 8936 ) then
-		local abundance = addon.BuffTracker:Get(207383);
+	if ( spellInfo.spellID == addon.Druid.Regrowth ) then
+		local abundance = addon.BuffTracker:Get(addon.Druid.AbundanceBuff);
 		if ( addon:isBFA() ) then
 			C = C + (abundance * 0.06);
 		else

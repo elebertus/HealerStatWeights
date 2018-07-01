@@ -46,6 +46,7 @@ function addon:SetupConversionFactors()
 	addon.IntConv		= 1.05; --int to SP conversion factor
 	
 	local mastery_factor = 1;
+	
 	if ( self:IsRestoDruid() ) then
 		mastery_factor = 5/3;
 	elseif ( self:IsRestoShaman() ) then
@@ -54,10 +55,13 @@ function addon:SetupConversionFactors()
 		mastery_factor = 4/5;
 	elseif ( self:IsHolyPaladin() ) then
 		mastery_factor = 2/3;
+	elseif ( self:IsMistweaverMonk() ) then
+		mastery_factor = 1/3;
 	end
 	
 	if ( addon:isBFA() ) then
 		local level = UnitLevel("Player");
+		
 		addon.CritConv 		= crt_cnv[level-110+1]*100;
 		addon.HasteConv 	= hst_cnv[level-110+1]*100;
 		addon.VersConv 		= vrs_cnv[level-110+1]*100;
@@ -246,8 +250,7 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 			--make sure destGUID describes a valid unit (Exclude healing to pets/npcs)
 			local destUnit = addon.UnitManager:Find(destGUID);
 			if destUnit then 
-				--check if spell is a raid cooldown and we are excluding raid cooldowns.
-				local exclude_cds = addon.hsw.db.global.excludeRaidHealingCooldowns
+				local exclude_cds = addon.hsw.db.global.excludeRaidHealingCooldowns	--filter out raid cooldowns if we are excluding them
 				if ( not exclude_cds or (exclude_cds and not spellInfo.cd) ) then
 					local OH = overhealing and overhealing>0;
 					local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
@@ -310,9 +313,12 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 						ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
 					end
 					
+					--update display to user
 					addon:UpdateDisplayStats();
 				end
 			end
+		elseif ( not spellInfo ) then
+			addon:DiscoverIgnoredSpell(spellID);
 		end
 	end
 end
