@@ -108,7 +108,7 @@ function addon:GetStatsForDisplay()
     
     local INT = 1;
     local CRIT = (usingCritResurg and (segment:GetManaRestoreValue()/addon.CritConv + t.crit) or t.crit) / t.int;
-    local HASTE = (usingHPCT and t.haste_hpct or t.haste_hpm) / t.int;
+    local HASTE = (usingHPCT and (segment:GetHasteHPCT() + t.haste_hpm) or t.haste_hpm) / t.int;
     local VERS = (usingVersDR and t.vers_dr or t.vers) / t.int;
     local MAST = t.mast / t.int;
     local LEECH = t.leech / t.int;

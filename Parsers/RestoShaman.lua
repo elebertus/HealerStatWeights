@@ -56,15 +56,138 @@ addon.BuffTracker:Track(addon.Shaman.CloudburstBuff,StartCBT,nil); --cloudburst 
 
 
 --[[----------------------------------------------------------------------------
+	Resto Shaman Spell Power
+		- use weighted average of feeder spells for cloudburst
+------------------------------------------------------------------------------]]
+local function _Intellect(ev,spellInfo,heal,destUnit,SP)
+	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
+		SP = cbt.sp_times_heal / cbt.heal;
+	end
+	
+	return addon.BaseParsers.Intellect(ev,spellInfo,heal,destUnit,SP,nil);
+end
+
+
+--[[----------------------------------------------------------------------------
+	Resto Shaman Critical Strike
+		- modified by tidal waves on healing surge
+		- use weighted average of feeder spells for cloudburst
+------------------------------------------------------------------------------]]
+local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)	
+	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
+		C = cbt.crit_times_heal / cbt.heal;
+	elseif ( spellInfo.spellID == addon.Shaman.HealingSurge ) then
+		if ( addon.BuffTracker:Get(addon.Shaman.TidalWavesBuff) > 0 ) then
+			C = C + 0.4;
+		end
+	end
+	
+	return addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,nil);
+end
+
+
+
+--[[----------------------------------------------------------------------------
+	Resto Shaman Haste
+		- use weighted average of feeder spells for cloudburst
+------------------------------------------------------------------------------]]
+local function _Haste(ev,spellInfo,heal,destUnit,H)	
+	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
+		H = cbt.haste_times_heal / cbt.heal;
+	end
+	
+	return addon.BaseParsers.Haste(ev,spellInfo,heal,destUnit,H,nil);
+end
+
+
+
+--[[----------------------------------------------------------------------------
+	Resto Shaman Versatility
+		- use weighted average of feeder spells for cloudburst
+------------------------------------------------------------------------------]]
+local function _Versatility(ev,spellInfo,heal,destUnit,V)	
+	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
+		V = cbt.vers_times_heal / cbt.heal;
+	end
+	
+	return addon.BaseParsers.Versatility(ev,spellInfo,heal,destUnit,V,nil);
+end
+
+
+
+--[[----------------------------------------------------------------------------
+	Resto Shaman Mastery
+		- Mastery effect is based on % hp on target
+		- use weighted average of feeder spells for cloudburst
+------------------------------------------------------------------------------]]
+local function _Mastery(ev,spellInfo,heal,destUnit,M,ME_ascendance)
+	local ME;
+	
+	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
+		M = cbt.mast_times_heal / cbt.heal;
+		ME = cbt.masteffect_times_heal / cbt.heal;
+		return ME*heal / (1+ME*M) / addon.MasteryConv;
+	end
+	
+	if not spellInfo.mst then
+		return 0;
+	end
+	
+	if ME_ascendance then
+		ME = ME_ascendance;
+	else
+		ME = getMasteryEffect(destUnit);
+	end
+	
+	return ME*heal / (1+ME*M) / addon.MasteryConv;
+end
+
+
+
+--[[----------------------------------------------------------------------------
 	Heal Event - Ascendance & CBT tracking
 ------------------------------------------------------------------------------]]
 local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit)	
 	--Ascendance
-	local ascendance = addon.BuffTracker:Get(addon.Shaman.AscendanceBuff);
-	print("asc?",ascendance);
-	if ( ascendance > 0 ) then
+	if (spellInfo.spellID == addon.Shaman.Ascendance) then
+		local event = ascendanceQueue:MatchHeal();
 		
-		ascendanceQueue:Enqueue(3,destUnit);
+		if ( event ) then
+			local cur_seg = addon.SegmentManager:Get(0);
+			local ttl_seg = addon.SegmentManager:Get("Total");
+			
+			if ( overhealing == 0 ) then
+				local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
+				_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,event.SP);
+				_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,event.C,addon.ply_crtbonus) ;
+				_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,event.H);
+				_M	 			= _Mastery(ev,spellInfo,heal,destUnit,event.M,event.ME);
+				_V	 			= _Versatility(ev,spellInfo,heal,destUnit,event.V);
+				_L	 			= _Leech(ev,spellInfo,heal,destUnit,event.L);
+
+				--Add derivatives to current & total segments
+				if ( cur_seg ) then
+					cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+				end
+				if ( ttl_seg ) then
+					ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+				end
+				
+				addon:UpdateDisplayStats();
+			end
+			
+			if ( event.filler ) then
+				if ( cur_seg ) then
+					cur_seg:IncFillerHealing(heal);
+				end
+				if ( ttl_seg ) then
+					ttl_seg:IncFillerHealing(heal);
+				end
+			end
+		end
+		return true;
+	elseif ( addon.BuffTracker:Get(addon.Shaman.AscendanceBuff) > 0 ) then
+		ascendanceQueue:Enqueue(3,spellInfo.filler,destUnit);
 	end
 	
 	--CBT
@@ -97,105 +220,6 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit)
 	end
 end
 
-
-
---[[----------------------------------------------------------------------------
-	Resto Shaman Spell Power
-		- use weighted average of feeder spells for cloudburst
-------------------------------------------------------------------------------]]
-local function _Intellect(ev,spellInfo,heal,destUnit,SP)
-	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
-		SP = cbt.sp_times_heal / cbt.heal;
-	elseif ( spellInfo.spellID == addon.Shaman.Ascendance ) then
-		local event = ascendanceQueue:MatchHeal();
-		SP = event and event.SP or SP;
-	end
-	
-	return addon.BaseParsers.Intellect(ev,spellInfo,heal,destUnit,SP,nil);
-end
-
-
---[[----------------------------------------------------------------------------
-	Resto Shaman Critical Strike
-		- modified by tidal waves on healing surge
-		- use weighted average of feeder spells for cloudburst
-------------------------------------------------------------------------------]]
-local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)	
-	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
-		C = cbt.crit_times_heal / cbt.heal;
-	elseif ( spellInfo.spellID == addon.Shaman.HealingSurge ) then
-		if ( addon.BuffTracker:Get(addon.Shaman.TidalWavesBuff) > 0 ) then
-			C = C + 0.4;
-		end
-	elseif ( spellInfo.spellID == addon.Shaman.Ascendance ) then
-		local event = ascendanceQueue:MatchHeal();
-		C = event and event.C or C;
-	end
-	
-	return addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,nil);
-end
-
-
-
---[[----------------------------------------------------------------------------
-	Resto Shaman Haste
-		- use weighted average of feeder spells for cloudburst
-------------------------------------------------------------------------------]]
-local function _Haste(ev,spellInfo,heal,destUnit,H)	
-	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
-		H = cbt.haste_times_heal / cbt.heal;
-	elseif ( spellInfo.spellID == addon.Shaman.Ascendance ) then
-		local event = ascendanceQueue:MatchHeal();
-		H = event and event.H or H;
-	end
-	
-	return addon.BaseParsers.Haste(ev,spellInfo,heal,destUnit,H,nil);
-end
-
-
-
---[[----------------------------------------------------------------------------
-	Resto Shaman Versatility
-		- use weighted average of feeder spells for cloudburst
-------------------------------------------------------------------------------]]
-local function _Versatility(ev,spellInfo,heal,destUnit,V)	
-	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
-		V = cbt.vers_times_heal / cbt.heal;
-	elseif ( spellInfo.spellID == addon.Shaman.Ascendance ) then
-		local event = ascendanceQueue:MatchHeal();
-		V = event and event.V or V;
-	end
-	
-	return addon.BaseParsers.Versatility(ev,spellInfo,heal,destUnit,V,nil);
-end
-
-
-
---[[----------------------------------------------------------------------------
-	Resto Shaman Mastery
-		- Mastery effect is based on % hp on target
-		- use weighted average of feeder spells for cloudburst
-------------------------------------------------------------------------------]]
-local function _Mastery(ev,spellInfo,heal,destUnit,M)
-	if ( spellInfo.spellID == addon.Shaman.CloudburstHeal ) then
-		M = cbt.mast_times_heal / cbt.heal;
-		local ME = cbt.masteffect_times_heal / cbt.heal;
-		return ME*heal / (1+ME*M) / addon.MasteryConv;
-	end
-	
-	if not spellInfo.mst then
-		return 0;
-	end
-	
-	local ME = getMasteryEffect(destUnit);
-	if ( spellInfo.spellID == addon.Shaman.Ascendance ) then
-		local event = ascendanceQueue:MatchHeal();
-		M = event and event.M or M;
-		ME = event and event.ME or ME;
-	end
-	
-	return ME*heal / (1+ME*M) / addon.MasteryConv;
-end
 
 
 

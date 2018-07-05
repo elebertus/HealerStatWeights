@@ -187,15 +187,16 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		if ( addon.BeaconUnits[UnitGUID(destUnit)] ) then
 			numBeacons = math.max(numBeacons - 1,0);
 		end
-		beaconHeals:Enqueue(numBeacons,destUnit);
+		beaconHeals:Enqueue(numBeacons,spellInfo.filler,destUnit);
 	elseif (spellInfo.spellID == addon.Paladin.BeaconOfLight) then
 		local event = beaconHeals:MatchHeal();
 		
 		if ( event ) then
+			local cur_seg = addon.SegmentManager:Get(0);
+			local ttl_seg = addon.SegmentManager:Get("Total");
+			
 			if ( overhealing == 0 ) then
 				local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
-				local cur_seg = addon.SegmentManager:Get(0);
-				local ttl_seg = addon.SegmentManager:Get("Total");
 				
 				_I 	 			= addon.BaseParsers.Intellect(ev,spellInfo,heal,destUnit,event.SP,f);
 				_C				= addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,event.C,addon.ply_crtbonus,f) ;
@@ -213,6 +214,15 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 				end
 				
 				addon:UpdateDisplayStats();
+			end
+			
+			if ( event.filler ) then
+				if ( cur_seg ) then
+					cur_seg:IncFillerHealing(heal);
+				end
+				if ( ttl_seg ) then
+					ttl_seg:IncFillerHealing(heal);
+				end
 			end
 		end
 		return true; --skip normal computation of healing event

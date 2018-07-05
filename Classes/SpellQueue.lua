@@ -16,7 +16,7 @@ function Queue.Create(fMasteryEffect)
 	t.getMasteryEffect = fMasteryEffect;
 	t.front = 0;
 	t.back = 0;
-	t.Enqueue = function(self,count,...)
+	t.Enqueue = function(self,count,data,...)
 		count = count or 1;
 		
 		local masteryEffect = 0;
@@ -24,8 +24,9 @@ function Queue.Create(fMasteryEffect)
 			masteryEffect = t.getMasteryEffect(...);
 		end
 		
-		local data = {
+		local eventData = {
 			ts = GetTime(),
+			data = data,
 			ME = masteryEffect,
 			C = addon.ply_crt,
 			SP = addon.ply_sp,
@@ -37,7 +38,7 @@ function Queue.Create(fMasteryEffect)
 		
 		for i=1,count,1 do
 			self.front = self.front+1;
-			self[self.front] = copy(data);
+			self[self.front] = copy(eventData);
 		end
 	end;
 	t.Dequeue = function(self)

@@ -28,11 +28,13 @@ end
 --[[----------------------------------------------------------------------------
 	CompareTimestamps() - check if two events happened at the same time (Uses a small buffer window).
 ------------------------------------------------------------------------------]]
-function BuffTracker:CompareTimestamps(ts1,ts2)
+function BuffTracker:CompareTimestamps(ts1,ts2,leniancy)
 	ts1 = ts1 or 0;
 	ts2 = ts2 or 0;
 	
-	if ( ts1 > 0 and ts2 > 0 and math.abs(ts1-ts2) <= addon.TimestampDelta ) then
+	local leniancy = leniancy or addon.TimestampDelta;
+	
+	if ( ts1 > 0 and ts2 > 0 and math.abs(ts1-ts2) <= leniancy ) then
 		return true;
 	end
 	return false;

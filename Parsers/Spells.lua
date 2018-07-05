@@ -110,10 +110,12 @@ addon.Druid.CenarionWard = 102352;
 addon.Druid.Renewal = 108238;
 addon.Druid.DreamerHoT = 253432; -- t21
 addon.Druid.AbundanceBuff = 207383;
+addon.Druid.CenarionWardCast = 102351;
+
 
 --																I C H H V M L
 createSpellInfo(addon.Druid.TranquilityHeal,SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,T,T,T,T,T,T);
+createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,_,T,T,T,T,T); --cant crit?
 createSpellInfo(addon.Druid.Rejuvenation,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Germination,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.LifebloomHoT,	SpellType.DRUID,	T,T,T,T,T,T,T);
@@ -127,12 +129,13 @@ createSpellInfo(addon.Druid.Swiftmend,		SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.HealingTouch,	SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.LivingSeed,		SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.FrenziedRegen,	SpellType.DRUID,	_,_,_,T,_,T,_);
-
 createSpellInfo(addon.Druid.SpringBlossoms,	SpellType.DRUID,	T,T,T,_,T,T,T);
 createSpellInfo(addon.Druid.Cultivation,	SpellType.DRUID,	T,T,T,_,T,T,T);
 createSpellInfo(addon.Druid.CenarionWard,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Renewal,		SpellType.DRUID,	_,_,_,T,_,_,_);
 createSpellInfo(addon.Druid.DreamerHoT,		SpellType.DRUID,	T,T,T,_,T,T,T);
+
+createSpellInfo(addon.Druid.CenarionWardCast, SpellType.IGNORED);
 
 addon.BuffTracker:Track(addon.Druid.AbundanceBuff)
 
@@ -176,8 +179,15 @@ addon.Shaman.TidalWavesBuff = 53390;
 addon.Shaman.AscendanceBuff = 114052;
 addon.Shaman.Resurgence = 101033;
 
-addon.BuffTracker:Track(addon.Shaman.TidalWavesBuff);
-
+addon.Shaman.CBTCast = 157153;
+addon.Shaman.CBTRecallCast = 201764;
+addon.Shaman.HealingRainCast = 73920;
+addon.Shaman.AscendanceCast = 114052; --same as buff
+addon.Shaman.HSTCast = 5394;
+addon.Shaman.SLTCast = 98008;
+addon.Shaman.ESTCast = 198838;
+addon.Shaman.APTCast = 207399;
+addon.Shaman.WellspringCast = 197995;
 
 
 --																	I C H H V M L
@@ -193,14 +203,25 @@ createSpellInfo(addon.Shaman.HealingSurge,  	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.HealingStream, 	SpellType.SHAMAN,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Shaman.HealingRain, 		SpellType.SHAMAN,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Shaman.CloudburstHeal, 	SpellType.SHAMAN,	T,T,_,T,T,T,_); --handled via special case
-
 createSpellInfo(addon.Shaman.Undulation,	 	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.UnleashLife,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.WellSpring,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);	
 createSpellInfo(addon.Shaman.Ascendance,		SpellType.SHAMAN,	T,T,_,T,T,T,_);
 
+createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.CBTCast,			SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.CBTRecallCast,		SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.HealingRainCast,	SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.AscendanceCast,	SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.HSTCast,			SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.SLTCast,			SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.ESTCast,			SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.APTCast,			SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.WellspringCast,	SpellType.IGNORED);	
+
 setRaidCooldown(addon.Shaman.HealingTide);
+
+addon.BuffTracker:Track(addon.Shaman.TidalWavesBuff);
 
 setHasteHpmOnlyOnPeriodic(addon.Shaman.Riptide);
 
@@ -232,7 +253,13 @@ addon.HolyPriest.TrailOfLight = 234946;
 addon.HolyPriest.DivineStar = 110745;
 addon.HolyPriest.BodyAndMind = 214121;
 addon.HolyPriest.EchoOfLight = 77489;
-addon.HolyPriest.Salvation = 265202
+addon.HolyPriest.Salvation = 265202;
+
+addon.HolyPriest.PoMCast = 33076;
+addon.HolyPriest.DivineStarCast = 110744;
+addon.HolyPriest.HaloCast = 120517;
+addon.HolyPriest.DivineHymnCast = 64843;
+
 --																		I C H H V M L
 createSpellInfo(addon.HolyPriest.Renew,				SpellType.HPRIEST,	T,T,_,T,T,_,T);		
 createSpellInfo(addon.HolyPriest.Serenity,			SpellType.HPRIEST,	T,T,_,T,T,_,T);		
@@ -253,6 +280,11 @@ createSpellInfo(addon.HolyPriest.TrailOfLight,		SpellType.HPRIEST,	T,T,_,T,T,_,T
 createSpellInfo(addon.HolyPriest.DivineStar,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
 createSpellInfo(addon.HolyPriest.BodyAndMind,		SpellType.HPRIEST,	T,T,T,T,T,_,T);		
 createSpellInfo(addon.HolyPriest.EchoOfLight,		SpellType.HPRIEST,	T,T,_,T,T,T,T);	
+
+createSpellInfo(addon.HolyPriest,PoMCast,			SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest,DivineStarCast,	SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest,HaloCast,			SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest,DivineHymnCast,	SpellType.IGNORED);
 
 setRaidCooldown(addon.HolyPriest.DivineHymn);
 setRaidCooldown(addon.HolyPriest.Salvation);
@@ -285,6 +317,12 @@ addon.Paladin.BeaconOfLight = 53652
 addon.Paladin.LayOnHands = 633;
 addon.Paladin.AvengingCrusader = 216371;
 
+
+addon.Paladin.HolyShockCast = 20473;
+addon.Paladin.HolyPrismCast = 114165;
+addon.Paladin.AuraMasteryCast = 31821;
+addon.Paladin.LightOfDawnCast = 85222;
+
 --																	I C H H V M L
 createSpellInfo(addon.Paladin.BeaconOfLight,	SpellType.PALADIN,	T,T,_,T,T,T,_);
 createSpellInfo(addon.Paladin.AuraOfSacrifice,	SpellType.PALADIN,	T,T,_,T,T,T,T);
@@ -300,7 +338,12 @@ createSpellInfo(addon.Paladin.ArcingLight,		SpellType.PALADIN,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Paladin.FlashOfLight,		SpellType.PALADIN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Paladin.LightOfTheMartyr,	SpellType.PALADIN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Paladin.AvengingCrusader,	SpellType.PALADIN,	T,T,_,T,T,_,T);
+
 createSpellInfo(addon.Paladin.LayOnHands, 		SpellType.IGNORED);
+createSpellInfo(addon.Paladin.HolyShockCast, 	SpellType.IGNORED);
+createSpellInfo(addon.Paladin.HolyPrismCast, 	SpellType.IGNORED);
+createSpellInfo(addon.Paladin.AuraMasteryCast, 	SpellType.IGNORED);
+createSpellInfo(addon.Paladin.LightOfDawnCast, 	SpellType.IGNORED);
 
 local function setTransfersToBeacon(id)
 	Spells[id].transfersToBeacon=true;
@@ -349,6 +392,14 @@ addon.Monk.ChiBolt = 253581; --T21
 addon.Monk.LifeCocoon = 116849;
 addon.Monk.EnvelopingMistTFT = 274062;
 
+addon.Monk.JadeStatueCast = 115313;
+addon.Monk.ZenPulseCast = 124081;
+addon.Monk.EssenceFontCast = 191837;
+addon.Monk.ChiBurstCast = 123986;
+addon.Monk.ChiWaveCast = 115098;
+addon.Monk.RJWCast = 196725;
+addon.Monk.ChiJiCast = 198664;
+
 --																I C H H V M L
 createSpellInfo(addon.Monk.RenewingMist,		SpellType.MONK,	T,T,T,T,T,_,T);
 createSpellInfo(addon.Monk.RJW,					SpellType.MONK,	T,T,_,T,T,_,T);
@@ -367,6 +418,15 @@ createSpellInfo(addon.Monk.LifeCocoon,			SpellType.MONK,	T,_,_,T,T,_,_);
 createSpellInfo(addon.Monk.EnvelopingMistTFT,	SpellType.MONK,	T,T,_,T,T,_,T);
 createSpellInfo(addon.Monk.HealingElixir,		SpellType.MONK,	_,_,_,T,_,_,_);
 createSpellInfo(addon.Monk.GustOfMists,			SpellType.MONK,	T,T,_,T,T,T,T); --monk mastery
+
+createSpellInfo(addon.Monk.JadeStatueCast,		SpellType.IGNORED);
+createSpellInfo(addon.Monk.ZenPulseCast,		SpellType.IGNORED);
+createSpellInfo(addon.Monk.EssenceFontCast,		SpellType.IGNORED);
+createSpellInfo(addon.Monk.ChiBurstCast,		SpellType.IGNORED);
+createSpellInfo(addon.Monk.ChiWaveCast,			SpellType.IGNORED);
+createSpellInfo(addon.Monk.RJWCast,				SpellType.IGNORED);
+createSpellInfo(addon.Monk.ChiJiCast,			SpellType.IGNORED);
+
 
 setRaidCooldown(addon.Monk.Revival);
 

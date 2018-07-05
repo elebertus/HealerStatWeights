@@ -77,10 +77,10 @@ end
 ------------------------------------------------------------------------------]]
 local summons = {};
 
-function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, heal, overhealing, absorbed, critFlag)
+function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag)
 	if ( addon.inCombat ) then
 		if ( addon:isBFA() ) then
-			ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, heal, overhealing, absorbed, critFlag = CombatLogGetCurrentEventInfo();
+			ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag = CombatLogGetCurrentEventInfo();
 		end
 		
 		--Track healing amount of mana spent on casting filler spells (for mp5 calculation)
@@ -115,14 +115,8 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 				if ( spellID == addon.Shaman.Resurgence ) then
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
-					
-					if ( cur_seg ) then
-						cur_seg.manaRestore = cur_seg.manaRestore + heal;
-					end					
-					
-					if ( ttl_seg ) then
-						ttl_seg.manaRestore = ttl_seg.manaRestore + heal;
-					end		
+					cur_seg:IncManaRestore(amount);
+					ttl_seg:IncManaRestore(amount);
 				end
 			end
 		
@@ -137,8 +131,8 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 			end
 		end
 		
-		--set current segment name (if not already set).
-		if ( ev == "SPELL_DAMAGE") then
+		if ( ev == "SPELL_DAMAGE" or ev == "SPELL_PERIODIC_DAMAGE" ) then
+			--set current segment name (if not already set)
 			local segment = addon.SegmentManager:Get(0);
 			if ( not segment.nameSet ) then
 				destGUID = string.lower(destGUID);
@@ -146,16 +140,21 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 					addon.SegmentManager:SetCurrentId(destName);
 				end
 			end
+			
+			--redirect event to the stat parser
+			if (sourceGUID == UnitGUID("Player")) then 
+				addon.StatParser:DecompDamageDone(amount);
+			end
 		end
 	
 		--redirect spell events to the stat parsers.
 		if ( ev == "SPELL_PERIODIC_DAMAGE" or ev == "SPELL_DAMAGE" ) then 
 			if ( destGUID == UnitGUID("Player") ) then
-				addon.StatParser:DecompDamageTaken(heal);
+				addon.StatParser:DecompDamageTaken(amount);
 			end
 		elseif ( ev == "SPELL_HEAL" or ev == "SPELL_PERIODIC_HEAL"  ) then
 			if ( (sourceGUID == UnitGUID("Player")) or summons[sourceGUID] ) then
-				addon.StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,heal+absorbed,overhealing);
+				addon.StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,amount-overhealing,overhealing);
 			end
 		end
 	end
@@ -171,12 +170,20 @@ local function UnitEventHandler(_,e,...)
 		addon.BuffTracker:UpdatePlayerBuffs();
 	elseif ( e == "UNIT_STATS") then
 		addon:UpdatePlayerStats();
+	elseif ( e == "UNIT_SPELLCAST_START" ) then
+		addon.CastTracker:StartCast(...);
+	elseif ( e == "UNIT_SPELLCAST_SUCCEEDED" ) then
+		addon.CastTracker:FinishCast(...);
 	end
 end
+
+
 
 function addon:SetupUnitEvents()
 	self.frame:RegisterUnitEvent("UNIT_AURA","Player");
 	self.frame:RegisterUnitEvent("UNIT_STATS","Player");
+	self.frame:RegisterUnitEvent("UNIT_SPELLCAST_START","Player");
+	self.frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED","Player");
 	self.frame:SetScript("OnEvent",UnitEventHandler);
 end
 

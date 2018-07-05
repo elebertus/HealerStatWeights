@@ -221,9 +221,10 @@ local StatParser = {};
 --[[----------------------------------------------------------------------------
 	Create - add a new stat parser to be used by the addon.
 ------------------------------------------------------------------------------]]
-function StatParser:Create(id,func_I,func_C,func_H,func_V,func_M,func_L,func_HealEvent)
+function StatParser:Create(id,func_I,func_C,func_H,func_V,func_M,func_L,func_HealEvent,func_DamageEvent)
 	self[id] = {};
 	if ( func_HealEvent ) then self[id].HealEvent = func_HealEvent; end
+	if ( func_DamageEvent ) then self[id].DamageEvent = func_DamageEvent; end
 	if ( func_I ) then self[id].Intellect = func_I; end
 	if ( func_C ) then self[id].CriticalStrike = func_C; end
 	if ( func_H ) then self[id].Haste = func_H; end
@@ -259,15 +260,15 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 					
 					--Track healing amount of filler spells vs overall healing. (For mp5 calculations)
 					if ( cur_seg ) then
-						cur_seg.totalHealing = cur_seg.totalHealing + heal;
+						cur_seg:IncTotalHealing(heal)
 						if ( spellInfo.filler ) then
-							cur_seg.fillerHealing = cur_seg.fillerHealing + heal;
+							cur_seg:IncFillerHealing(heal);
 						end
 					end
 					if ( ttl_seg ) then
-						ttl_seg.totalHealing = ttl_seg.totalHealing + heal;
+						ttl_seg:IncTotalHealing(heal)
 						if ( spellInfo.filler ) then
-							ttl_seg.fillerHealing = ttl_seg.fillerHealing + heal;
+							ttl_seg:IncFillerHealing(heal);
 						end
 					end
 					
@@ -326,12 +327,32 @@ end
 
 
 --[[----------------------------------------------------------------------------
+	DecompDamageDone
+------------------------------------------------------------------------------]]
+function StatParser:DecompDamageDone(amt)
+	local f = self[specId and tonumber(specId) or 0];
+	
+	--check if parser exist for current spec
+	if ( f and f.DamageEvent ) then 
+		--check if spellInfo is valid for current spec.
+		local spellInfo = addon.Spells:Get(spellID);
+		if ( spellInfo and (spellInfo.spellType == specId or spellInfo.spellType == addon.SpellType.SHARED) ) then
+			f.DamageEvent(spellInfo,amt);
+		end
+	end
+end
+
+
+
+
+--[[----------------------------------------------------------------------------
 	DecompDamageTaken
 ------------------------------------------------------------------------------]]
 function StatParser:DecompDamageTaken(amt)
 	amt = amt or 0;
 	amt = math.min(UnitHealthMax("Player"),amt);
-	amt = amt / (addon.VersConv*2)
+	amt = amt / (addon.VersConv*2);
+	
 	--Add derivatives to current & total segments
 	local cur_seg = addon.SegmentManager:Get(0);
 	local ttl_seg = addon.SegmentManager:Get("Total");

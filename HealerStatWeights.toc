@@ -9,6 +9,7 @@
 embeds.xml
 
 Classes/BuffTracker.lua
+Classes/CastTracker.lua
 Classes/Segment.lua
 Classes/SegmentManager.lua
 Classes/StatParser.lua

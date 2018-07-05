@@ -53,6 +53,8 @@ function Segment.Create(id)
 	self.totalDuration = 0;
 	self.manaRestore = 0;
 	self.startTime = GetTime();
+	self.chainHaste = 0;
+	self.chainCasts = 0;
 	return self;
 end
 
@@ -76,6 +78,22 @@ function Segment:GetMP5()
 	local HPS = self.totalHealing / duration;
 
 	return int * (fillerHPM/5) / (HPS);
+end
+
+
+
+--[[----------------------------------------------------------------------------
+	GetHasteHPCT - Haste HPCT estimation using filler spells
+------------------------------------------------------------------------------]]
+function Segment:GetHasteHPCT()
+	if ( self.chainCasts == 0 or self.fillerCasts == 0 ) then
+		return 0;
+	end
+	
+	local avgFillerHealingPerCast = self.fillerHealing / self.fillerCasts;
+	local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
+	
+	return avgFillerHealingPerCast * self.chainCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
 end
 
 
@@ -156,6 +174,27 @@ function Segment:AllocateHealDR(versatilityDR)
 	self.t.vers_dr		= self.t.vers_dr	+ versatilityDR;
 end
 
+
+
+--[[----------------------------------------------------------------------------
+	Increment functions
+------------------------------------------------------------------------------]]
+function Segment:IncChainCasts()
+	self.chainHaste = self.chainHaste + addon.ply_hst;
+	self.chainCasts = self.chainCasts + 1;
+end
+
+function Segment:IncTotalHealing(amount)
+	self.totalHealing = self.totalHealing + amount;
+end
+
+function Segment:IncFillerHealing(amount)
+	self.fillerHealing = self.fillerHealing + amount;
+end
+
+function Segment:IncManaRestore(amount)
+	self.manaRestore = self.manaRestore + amount;
+end
 
 
 --[[----------------------------------------------------------------------------
