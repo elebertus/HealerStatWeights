@@ -23,7 +23,8 @@ local hots = { --spells that count towards druid mastery stacks
 	[addon.Druid.SpringBlossoms]=true,
 	[addon.Druid.Cultivation]=true,
 	[addon.Druid.CenarionWard]=true,
-	[addon.Druid.DreamerHoT]=true
+	[addon.Druid.DreamerHoT]=true,
+	[addon.Druid.FrenziedRegen]=true 
 }
 
 local function hotCount(unit)
@@ -73,9 +74,16 @@ end
 	Druid Mastery 
 		- modified by hotcount on target
 ------------------------------------------------------------------------------]]
+local DruidArtifactWeaponID = 128306;
+
 local function _Mastery(ev,spellInfo,heal,destUnit,M)
 	if ( spellInfo.mst ) then --spell is affected by mastery, get the hotCount on target.		
 		local count = hotCount(destUnit);
+		
+		if ( spellInfo.spellID == addon.Druid.FrenziedRegen and not IsEquippedItem(DruidArtifactWeaponID) ) then --FR isnt affected by itself when not using artifact weapon https://imgur.com/SmHa1bw
+			count = math.max(0,count-1);
+		end
+		
 		return count*heal / (1+count*M) / addon.MasteryConv;
 	end
 	return 0;

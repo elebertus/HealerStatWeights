@@ -1,8 +1,8 @@
 ## Interface: 80000
 ## Title: Healer Stat Weights
-## Author: Bastas (notarealwzrd#1450)
-## Version: 0.8.4
-## Notes: Addon extension of the RDSW weakaura for resto druids. Originally by Manaleaf; and updated by Voulk. Computes statweights for healers in real-time! BFA-friendly. 
+## Author: Bastas#6681 (discord)
+## Version: 0.8.5
+## Notes: Addon extension of the RDSW weakaura for resto druids, extended for all healing specs! Originally by Manaleaf; and updated by Voulk. Computes statweights for healers in real-time! BFA-friendly. 
 ## DefaultState: Enabled
 ## SavedVariables: HSW_DB 
 
@@ -14,7 +14,7 @@ Classes/Segment.lua
 Classes/SegmentManager.lua
 Classes/StatParser.lua
 Classes/UnitManager.lua
-Classes/SpellQueue.lua
+Classes/Queues.lua
 
 Parsers/Spells.lua
 Parsers/HolyPriest.lua

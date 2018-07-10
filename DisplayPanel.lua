@@ -108,7 +108,7 @@ function addon:GetStatsForDisplay()
     
     local INT = 1;
     local CRIT = (usingCritResurg and (segment:GetManaRestoreValue()/addon.CritConv + t.crit) or t.crit) / t.int;
-    local HASTE = (usingHPCT and (segment:GetHasteHPCT() + t.haste_hpm) or t.haste_hpm) / t.int;
+    local HASTE = (usingHPCT and segment:GetHasteHPCT() or t.haste_hpm) / t.int;
     local VERS = (usingVersDR and t.vers_dr or t.vers) / t.int;
     local MAST = t.mast / t.int;
     local LEECH = t.leech / t.int;
@@ -323,18 +323,21 @@ end
 --[[----------------------------------------------------------------------------
     EndFight - End current combat segment 
 ------------------------------------------------------------------------------]]
-function addon:EndFight(id)
-    if ( addon.inCombat ) then
-        addon.inCombat = false;
+function addon:EndFight()
+    if ( self.inCombat ) then
+        self.inCombat = false;
         
-        local cur_seg = addon.SegmentManager:Get(0);
-        local ttl_seg = addon.SegmentManager:Get("Total");
+        local cur_seg = self.SegmentManager:Get(0);
+        local ttl_seg = self.SegmentManager:Get("Total");
         if ( cur_seg ) then
             cur_seg:End();
-        end
+			self:AddHistoricalSegment(cur_seg);
+		end
         if ( ttl_seg ) then
             ttl_seg:End();
         end
+		
+		
     end
 end
 
@@ -417,6 +420,17 @@ end
 
 
 --[[----------------------------------------------------------------------------
+    ResetFramePosition - Reset the frame's position to center of screen
+------------------------------------------------------------------------------]]
+function addon:ResetFramePosition()
+	self.hsw.db.global.frameX = nil;
+	self.frame:ClearAllPoints();
+	self.frame:SetPoint("CENTER",0,0);
+end
+
+
+
+--[[----------------------------------------------------------------------------
     SetupFrame - Set up the main display panel
 ------------------------------------------------------------------------------]]
 function addon:SetupFrame()
@@ -432,7 +446,7 @@ function addon:SetupFrame()
         if ( self.hsw.db.global.frameX ) then
             frame:SetPoint("BOTTOMLEFT",self.hsw.db.global.frameX or 0,self.hsw.db.global.frameY or 0);
         else
-            frame:SetPoint("CENTER");
+            frame:SetPoint("CENTER",0,0);
         end
         
         frame:EnableMouse(not self.hsw.db.global.frameLocked);

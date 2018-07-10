@@ -11,7 +11,36 @@ local function copy(t)
 	return new_t;
 end
 
-function Queue.Create(fMasteryEffect)
+function Queue.CreateHistoryQueue()
+	local t = {};
+	t.Enqueue = function(self,item)
+		addon.hsw.db.global.front = addon.hsw.db.global.front+1;
+		addon.hsw.db.global.history[addon.hsw.db.global.front] = copy(item);
+		while ( self:Size() > addon.hsw.db.global.historySize ) do
+			self:Dequeue()
+		end
+	end
+	t.Dequeue = function(self)
+		if ( self:Size()>0 ) then
+			addon.hsw.db.global.back = addon.hsw.db.global.back + 1;
+			addon.hsw.db.global.history[addon.hsw.db.global.back] = nil;
+		end
+	end
+	t.Size = function(self)
+		return addon.hsw.db.global.front - addon.hsw.db.global.back;
+	end
+	t.Get = function(self,i)
+		if ( addon.hsw.db.global.history[addon.hsw.db.global.front-i] ) then
+			return addon.hsw.db.global.history[addon.hsw.db.global.front-i];
+		end
+		return nil;
+	end
+	return t;
+end
+
+
+
+function Queue.CreateSpellQueue(fMasteryEffect)
 	local t = {};
 	t.getMasteryEffect = fMasteryEffect;
 	t.front = 0;
@@ -67,4 +96,4 @@ function Queue.Create(fMasteryEffect)
 	return t;
 end
 
-addon.SpellQueue = Queue;
+addon.Queue = Queue;

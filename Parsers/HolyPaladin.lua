@@ -179,7 +179,7 @@ end
 	healEvent 
 	- Track healing that feeds beacons
 ------------------------------------------------------------------------------]]
-local beaconHeals = addon.SpellQueue.Create(getMasteryEffect);
+local beaconHeals = addon.Queue.CreateSpellQueue(getMasteryEffect);
 
 local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 	if ( spellInfo.transfersToBeacon ) then

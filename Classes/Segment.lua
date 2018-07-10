@@ -93,7 +93,9 @@ function Segment:GetHasteHPCT()
 	local avgFillerHealingPerCast = self.fillerHealing / self.fillerCasts;
 	local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
 	
-	return avgFillerHealingPerCast * self.chainCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
+	local hpct_est_added = avgFillerHealingPerCast * self.chainCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
+	local haste_hpct = math.min(self.t.haste_hpm+hpct_est_added, self.t.haste_hpct);
+	return haste_hpct;
 end
 
 
@@ -196,6 +198,12 @@ function Segment:IncManaRestore(amount)
 	self.manaRestore = self.manaRestore + amount;
 end
 
+function Segment:IncBucket(key,amount)
+	if not self[key] then
+		self[key] = 0;
+	end
+	self[key] = self[key]+amount;
+end
 
 --[[----------------------------------------------------------------------------
 	Debug - print internal values of this segment to chat

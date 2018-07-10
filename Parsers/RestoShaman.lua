@@ -27,7 +27,7 @@ end
 --[[----------------------------------------------------------------------------
 	Ascendance - Spell queue & Buff tracking
 ------------------------------------------------------------------------------]]
-local ascendanceQueue = addon.SpellQueue.Create(getMasteryEffect);
+local ascendanceQueue = addon.Queue.CreateSpellQueue(getMasteryEffect);
 addon.BuffTracker:Track(addon.Shaman.AscendanceBuff);
 
 

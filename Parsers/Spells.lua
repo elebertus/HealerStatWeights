@@ -20,7 +20,6 @@ local SpellType = {
 	IGNORED = -1
 }
 
-
 			
 
 --[[----------------------------------------------------------------------------
@@ -112,7 +111,6 @@ addon.Druid.DreamerHoT = 253432; -- t21
 addon.Druid.AbundanceBuff = 207383;
 addon.Druid.CenarionWardCast = 102351;
 
-
 --																I C H H V M L
 createSpellInfo(addon.Druid.TranquilityHeal,SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,_,T,T,T,T,T); --cant crit?
@@ -128,7 +126,7 @@ createSpellInfo(addon.Druid.Effloresence,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Swiftmend,		SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.HealingTouch,	SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.LivingSeed,		SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.FrenziedRegen,	SpellType.DRUID,	_,_,_,T,_,T,_);
+createSpellInfo(addon.Druid.FrenziedRegen,	SpellType.DRUID,	_,_,_,T,T,T,_);
 createSpellInfo(addon.Druid.SpringBlossoms,	SpellType.DRUID,	T,T,T,_,T,T,T);
 createSpellInfo(addon.Druid.Cultivation,	SpellType.DRUID,	T,T,T,_,T,T,T);
 createSpellInfo(addon.Druid.CenarionWard,	SpellType.DRUID,	T,T,T,T,T,T,T);
@@ -434,6 +432,18 @@ setFillerSpell(addon.Monk.Vivify, 0.035);
 setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
 
 
+
+--[[----------------------------------------------------------------------------
+	Discipline Priest
+------------------------------------------------------------------------------]]
+
+--[[
+PWS_Buff
+SmiteDamage
+AtonementHeal
+
+.transfersToAtonement = true
+]]
 
 --[[----------------------------------------------------------------------------
 	Shared Spells
