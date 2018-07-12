@@ -15,7 +15,7 @@ local SpellType = {
 	HPRIEST = 257,
 	PALADIN = 65, 
 	MONK = 270,
-	-- Disc 256
+	DPRIEST = 256,
 	SHARED = 1,
 	IGNORED = -1
 }
@@ -436,11 +436,13 @@ setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
 --[[----------------------------------------------------------------------------
 	Discipline Priest
 ------------------------------------------------------------------------------]]
-
+addon.DiscPriest = {};
 --[[
 PWS_Buff
+PowerWordShield = 17
 SmiteDamage
 AtonementHeal
+AtonementBuff
 
 .transfersToAtonement = true
 ]]

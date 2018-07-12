@@ -194,6 +194,13 @@ function Segment:IncFillerHealing(amount)
 	self.fillerHealing = self.fillerHealing + amount;
 end
 
+
+function Segment:IncFillerCasts(manaCost)
+	self.fillerCasts = self.fillerCasts + 1;
+	self.fillerManaSpent = self.fillerManaSpent + manaCost;
+	self.fillerInt = self.fillerInt + (addon.ply_sp / addon.IntConv);
+end			
+
 function Segment:IncManaRestore(amount)
 	self.manaRestore = self.manaRestore + amount;
 end

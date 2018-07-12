@@ -77,11 +77,14 @@ end
 ------------------------------------------------------------------------------]]
 local summons = {};
 
-function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag)
+function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if ( addon.inCombat ) then
 		if ( addon:isBFA() ) then
-			ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag = CombatLogGetCurrentEventInfo();
+					  ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, pws_id, _, _, pws_abs = CombatLogGetCurrentEventInfo();
+		else	  
+			        _,ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, pws_id, _, _, pws_abs = unpack({...});
 		end
+			
 		
 		--Track healing amount of mana spent on casting filler spells (for mp5 calculation)
 		if ( sourceGUID == UnitGUID("Player") ) then
@@ -92,15 +95,11 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					
 					if ( cur_seg ) then
-						cur_seg.fillerCasts = cur_seg.fillerCasts + 1;
-						cur_seg.fillerManaSpent = cur_seg.fillerManaSpent + spellInfo.manaCost;
-						cur_seg.fillerInt = cur_seg.fillerInt + (addon.ply_sp / addon.IntConv);
-					end					
+						cur_seg:IncFillerCasts(spellInfo.manaCost);
+					end
 					
 					if ( ttl_seg ) then
-						ttl_seg.fillerCasts = ttl_seg.fillerCasts + 1;
-						ttl_seg.fillerManaSpent = ttl_seg.fillerManaSpent + spellInfo.manaCost;
-						ttl_seg.fillerInt = ttl_seg.fillerInt + (addon.ply_sp / addon.IntConv);
+						ttl_seg:IncFillerCasts(spellInfo.manaCost);
 					end
 				end
 			end
@@ -111,8 +110,8 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 			end
 		
 			--Track mana gained by resurgence
-			if ( ev == "SPELL_ENERGIZE" ) then
-				if ( spellID == addon.Shaman.Resurgence ) then
+			if ( spellID == addon.Shaman.Resurgence ) then
+				if ( ev == "SPELL_ENERGIZE" ) then
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					cur_seg:IncManaRestore(amount);
@@ -120,15 +119,43 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 				end
 			end
 		
-			if ( ev == "SPELL_AURA_APPLIED" and addon.BeaconBuffs[spellID] ) then
-				addon.BeaconCount = addon.BeaconCount + 1;
-				addon.BeaconUnits[destGUID]=true;
-			elseif ( ev == "SPELL_AURA_REMOVED" ) then
-				if ( addon.BeaconBuffs[spellID] ) then
+			--paladin beacon tracking
+			if ( addon.BeaconBuffs[spellID] ) then
+				if ( ev == "SPELL_AURA_APPLIED") then
+					addon.BeaconCount = addon.BeaconCount + 1;
+					addon.BeaconUnits[destGUID]=true;	
+				elseif ( ev == "SPELL_AURA_REMOVED" ) then
 					addon.BeaconCount = addon.BeaconCount - 1;
 					addon.BeaconUnits[destGUID]=false;
 				end
 			end
+			
+			-- Disc atonement tracking
+			if ( spellID == addon.DiscPriest.AtonementBuff ) then
+				if ( ev == "SPELL_AURA_APPLIED" ) then
+					addon.DiscPriest.AtonementTracker:ApplyOrRefresh(destGUID);
+				elseif ( ev == "SPELL_AURA_REMOVED" ) then
+					addon.DiscPriest.AtonementTracker:Remove(destGUID);
+				elseif ( ev == "SPELL_AURA_REFRESHED" ) then
+					addon.DiscPriest.AtonementTracker:ApplyOrRefresh(destGUID);
+				end
+			end		
+			
+			-- Disc PW:S tracking (part 1 of 2)
+			if ( spellID == addon.DiscPriest.PowerWordShield ) then
+				if ( ev == "SPELL_AURA_APPLIED" ) then
+					addon.DiscPriest.PWSTracker:ApplyOrRefresh(destGUID,overhealing); --16th arg is amount
+				elseif ( ev == "SPELL_AURA_REMOVED" ) then
+					addon.DiscPriest.PWSTracker:Remove(destGUID,overhealing); --16th arg is amount
+				elseif ( ev == "SPELL_AURA_REFRESHED" ) then
+					addon.DiscPriest.PWSTracker:ApplyOrRefresh(destGUID,overhealing); --16th arg is amount
+				end
+			end	
+		end
+		
+		--disc PW:S tracking (part 2 of 2)
+		if ( ev == "SPELL_AURA_ABSORBED" and amount == UnitGUID("Player") and pws_id == adon.DiscPriest.PowerWordShield ) then
+			addon.DiscPriest.PWSTracker:Absorb(destGUID,pws_abs);
 		end
 		
 		if ( ev == "SPELL_DAMAGE" or ev == "SPELL_PERIODIC_DAMAGE" ) then
@@ -154,6 +181,7 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(eventname,ts,ev,_,sourceGUID, _, 
 			end
 		elseif ( ev == "SPELL_HEAL" or ev == "SPELL_PERIODIC_HEAL"  ) then
 			if ( (sourceGUID == UnitGUID("Player")) or summons[sourceGUID] ) then
+				print("we got there.",ev,spellID);
 				addon.StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,amount-overhealing,overhealing);
 			end
 		end

@@ -299,7 +299,11 @@ function addon:StartFight(id)
             self.UnitManager:Cache()
 			if ( self:IsHolyPaladin() ) then
 				self:CountBeaconsAtStartOfFight();
+			elseif ( self:IsDiscPriest() ) then
+				self.DiscPriest.PWSTracker:EncounterStart();
+				self.DiscPriest.AtonementTracker:EncounterStart();
 			end
+				
             self.SegmentManager:Enqueue(id or "Unknown");
             if ( id ) then
                 self.SegmentManager:SetCurrentId(id);

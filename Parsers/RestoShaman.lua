@@ -147,45 +147,19 @@ end
 --[[----------------------------------------------------------------------------
 	Heal Event - Ascendance & CBT tracking
 ------------------------------------------------------------------------------]]
-local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit)	
+local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)	
 	--Ascendance
 	if (spellInfo.spellID == addon.Shaman.Ascendance) then
 		local event = ascendanceQueue:MatchHeal();
 		
 		if ( event ) then
-			local cur_seg = addon.SegmentManager:Get(0);
-			local ttl_seg = addon.SegmentManager:Get("Total");
-			
-			if ( overhealing == 0 ) then
-				local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
-				_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,event.SP);
-				_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,event.C,addon.ply_crtbonus) ;
-				_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,event.H);
-				_M	 			= _Mastery(ev,spellInfo,heal,destUnit,event.M,event.ME);
-				_V	 			= _Versatility(ev,spellInfo,heal,destUnit,event.V);
-				_L	 			= _Leech(ev,spellInfo,heal,destUnit,event.L);
-
-				--Add derivatives to current & total segments
-				if ( cur_seg ) then
-					cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
-				end
-				if ( ttl_seg ) then
-					ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
-				end
-				
-				addon:UpdateDisplayStats();
-			end
-			
 			if ( event.filler ) then
-				if ( cur_seg ) then
-					cur_seg:IncFillerHealing(heal);
-				end
-				if ( ttl_seg ) then
-					ttl_seg:IncFillerHealing(heal);
-				end
+				addon.StatParser:IncFillerHealing(heal);
 			end
+			
+			addon.StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,event.ME,event.L);
 		end
-		return true;
+		return true; --skip normal allocation of heal event
 	elseif ( addon.BuffTracker:Get(addon.Shaman.AscendanceBuff) > 0 ) then
 		ascendanceQueue:Enqueue(3,spellInfo.filler,destUnit);
 	end
@@ -218,6 +192,8 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit)
 		
 		cbt.heal = cbt.heal + total_heal;
 	end
+	
+	return false;
 end
 
 

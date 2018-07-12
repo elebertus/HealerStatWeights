@@ -175,9 +175,9 @@ local function _Versatility(ev,s,heal,destUnit,V,f)
 end
 
 --Mastery
-local function _Mastery(ev,s,heal,destUnit,M,f)
+local function _Mastery(ev,s,heal,destUnit,M,ME,f)
 	if ( f and f.Mastery ) then
-		return f.Mastery(ev,s,heal,destUnit,M)
+		return f.Mastery(ev,s,heal,destUnit,M,ME)
 	end
 	
 	if ( s.mst ) then
@@ -193,7 +193,7 @@ local function _Leech(ev,s,heal,destUnit,L,f)
 		return f.Leech(ev,s,heal,destUnit,L);
 	end
 	
-	if s.lee and UnitHealth("Player") ~= UnitHealthMax("Player") then
+	if s.lee and (UnitHealth("Player")+(heal*L)) < UnitHealthMax("Player") then
 		return heal / (1+L) / addon.LeechConv;
 	end
 	
@@ -234,14 +234,84 @@ function StatParser:Create(id,func_I,func_C,func_H,func_V,func_M,func_L,func_Hea
 end
 
 
+--[[----------------------------------------------------------------------------
+	GetParserForCurrentSpec
+------------------------------------------------------------------------------]]
+function StatParser:GetParserForCurrentSpec()
+    local i = GetSpecialization();
+	local specId = GetSpecializationInfo(i);
+	return self[specId and tonumber(specId) or 0],specId;
+end
+
+function StatParser:IncFillerHealing(heal)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	if ( cur_seg ) then
+		cur_seg:IncFillerHealing(heal);
+	end
+	if ( ttl_seg ) then
+		ttl_seg:IncFillerHealing(heal);
+	end
+end
+
+function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,V,M,ME,L)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	local OH = overhealing>0
+	local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
+		
+	if (not OH) then --allocate effective healing
+		_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,SP,f);
+		_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,f) ;
+		_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,H,f);
+		_M	 			= _Mastery(ev,spellInfo,heal,destUnit,M,ME,f);
+		_V	 			= _Versatility(ev,spellInfo,heal,destUnit,V,f);
+		_L	 			= _Leech(ev,spellInfo,heal,destUnit,L,f);
+	elseif ( addon.BuffTracker:Get(addon.VelensId) == 1 ) then --allow all normal healing, and 50% of overhealing to be counted
+		heal = heal+overhealing*0.5;
+		_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,SP,f);
+		_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,f);
+		_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,H,f);
+		_M	 			= _Mastery(ev,spellInfo,heal,destUnit,M,ME,f);
+		_V	 			= _Versatility(ev,spellInfo,heal,destUnit,V,f);
+		_L	 			= _Leech(ev,spellInfo,heal,destUnit,L,f);
+	else --overhealing with no velens buff, so only possible to attribute leech
+		_L	 			= _Leech(ev,spellInfo,heal,destUnit,L,f);
+	end
+						
+	--Add derivatives to current & total segments
+	if ( cur_seg ) then
+		cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+	end
+	if ( ttl_seg ) then
+		ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+	end
+	
+	--update display to user
+	addon:UpdateDisplayStats();
+end
+
+
+function StatParser:AllocateDamageLeech(ev,spellInfo,amount,L)
+	local _L = _Leech(ev,spellInfo,amount,nil,L,nil);
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	
+	--Track healing amount of filler spells vs overall healing. (For mp5 calculations)
+	if ( cur_seg ) then
+		cur_seg:AllocateHeal(0,0,0,0,0,0,_L);
+	end
+	if ( ttl_seg ) then
+		cur_seg:AllocateHeal(0,0,0,0,0,0,_L);
+	end
+	
+end
 
 --[[----------------------------------------------------------------------------
 	DecompHealingForCurrentSpec
 ------------------------------------------------------------------------------]]
 function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,heal,overhealing)
-    local i = GetSpecialization();
-	local specId = GetSpecializationInfo(i);
-	local f = self[specId and tonumber(specId) or 0];
+	local f,specId = self:GetParserForCurrentSpec();
 	
 	--check if parser exist for current spec
 	if ( f ) then 
@@ -254,7 +324,6 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 				local exclude_cds = addon.hsw.db.global.excludeRaidHealingCooldowns	--filter out raid cooldowns if we are excluding them
 				if ( not exclude_cds or (exclude_cds and not spellInfo.cd) ) then
 					local OH = overhealing and overhealing>0;
-					local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					
@@ -279,43 +348,15 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 					end
 
 					--Allow the class parser to do pre-computations on this heal event
-					local skip=false;
+					local skipAllocate=false;
 					if ( f.HealEvent ) then
-						skip = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f);
+						skipAllocate = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f);
 					end
 										
-					--Get healing derivatives for each stat
-					if ( not skip ) then
-						if (not OH) then --allocate effective healing
-							_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,addon.ply_sp,f);
-							_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,addon.ply_crt,addon.ply_crtbonus,f) ;
-							_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,addon.ply_hst,f);
-							_M	 			= _Mastery(ev,spellInfo,heal,destUnit,addon.ply_mst,f);
-							_V	 			= _Versatility(ev,spellInfo,heal,destUnit,addon.ply_vrs,f);
-							_L	 			= _Leech(ev,spellInfo,heal,destUnit,addon.ply_lee,f);
-						elseif ( addon.BuffTracker:Get(addon.VelensId) == 1 ) then --allow all normal healing, and 50% of overhealing to be counted
-							heal = heal+overhealing*0.5;
-							_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,addon.ply_sp,f);
-							_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,addon.ply_crt,addon.ply_crtbonus,f);
-							_Hhpm,_Hhpct	= _Haste(ev,spellInfo,heal,destUnit,addon.ply_hst,f);
-							_M	 			= _Mastery(ev,spellInfo,heal,destUnit,addon.ply_mst,f);
-							_V	 			= _Versatility(ev,spellInfo,heal,destUnit,addon.ply_vrs,f);
-							_L	 			= _Leech(ev,spellInfo,heal,destUnit,addon.ply_lee,f);
-						else --overhealing with no velens buff, so only attribute leech
-							_L	 			= _Leech(ev,spellInfo,heal,destUnit,addon.ply_lee,f);
-						end
+					--Allocate healing derivatives for each stat
+					if ( not skipAllocate ) then
+						self:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,addon.ply_sp,addon.ply_crt,addon.ply_crtbonus,addon.ply_hst,addon.ply_vrs,addon.ply_mst,nil,addon.ply_lee);
 					end
-					
-					--Add derivatives to current & total segments
-					if ( cur_seg ) then
-						cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
-					end
-					if ( ttl_seg ) then
-						ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
-					end
-					
-					--update display to user
-					addon:UpdateDisplayStats();
 				end
 			end
 		elseif ( not spellInfo ) then
@@ -338,10 +379,11 @@ function StatParser:DecompDamageDone(amt)
 		local spellInfo = addon.Spells:Get(spellID);
 		if ( spellInfo and (spellInfo.spellType == specId or spellInfo.spellType == addon.SpellType.SHARED) ) then
 			f.DamageEvent(spellInfo,amt);
+			
+			self:AllocateDamageLeech("SPELL_DAMAGE",spellInfo,amt,addon.ply_lee);
 		end
 	end
 end
-
 
 
 
@@ -370,9 +412,7 @@ end
 	IsCurrentSpecSupported - Check if current spec is supported 
 ------------------------------------------------------------------------------]]
 function StatParser:IsCurrentSpecSupported()
-    local i = GetSpecialization();
-	local specId = GetSpecializationInfo(i);
-	local f = self[specId and tonumber(specId) or 0];
+	local f = self:GetParserForCurrentSpec();
 	
 	if ( f ) then
 		return true;

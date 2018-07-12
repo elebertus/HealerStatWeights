@@ -390,7 +390,6 @@ function hsw:ChatCommand(input)
 		local seg = addon.SegmentManager:Get(addon.currentSegment);
 		if ( seg ) then seg:Debug() end
 	elseif (lwr_input == "start" ) then
-		addon.hsw.db.global.historySize = 100;
 		addon:StartFight("test");
 	elseif (lwr_input == "end" ) then
 		addon:EndFight();
@@ -411,10 +410,9 @@ end
 
 
 --[[----------------------------------------------------------------------------
-	History - historical segment stuff
+	History - store/retrieve historical segments
 ------------------------------------------------------------------------------]]
 addon.History = addon.Queue.CreateHistoryQueue();
-
 
 function addon:AddHistoricalSegment(segment)
     if ( not segment or not segment.t or segment.t.int==0) then
