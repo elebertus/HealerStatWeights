@@ -390,6 +390,8 @@ function hsw:ChatCommand(input)
 		local seg = addon.SegmentManager:Get(addon.currentSegment);
 		if ( seg ) then seg:Debug() end
 	elseif (lwr_input == "start" ) then
+		HFA_ENABLE_FOR_TESTING=true;
+		addon:Show();
 		addon:StartFight("test");
 	elseif (lwr_input == "end" ) then
 		addon:EndFight();
@@ -435,7 +437,7 @@ function addon:AddHistoricalSegment(segment)
 	h[int_label] = 1.0;
 	h[crt_label] = segment.t.crit/segment.t.int;
 	h[crt2_label] = (segment.t.crit+resurg_add)/segment.t.int;
-	h[hst_label] = segment.t.haste_hpm/segment.t.int;
+	h[hst_label] = segment:GetHaste()/segment.t.int;
 	h[hst2_label] = segment:GetHasteHPCT() / segment.t.int;
 	h[hst3_label] = segment.t.haste_hpct / segment.t.int;
 	h[vrs_label] = segment.t.vers / segment.t.int;

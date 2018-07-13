@@ -15,16 +15,22 @@ local leniancy = 0.33333; --1/3 of a second
 --[[----------------------------------------------------------------------------
 	IncChainCasts() --update info on current/total segments.
 ------------------------------------------------------------------------------]]
-function CastTracker:IncChainCasts()
+function CastTracker:IncChainCasts(spellID)
 	local cur_seg = addon.SegmentManager:Get(0);
 	local ttl_seg = addon.SegmentManager:Get("Total");
 	
 	if ( cur_seg ) then
 		cur_seg:IncChainCasts();
+		if ( spellID == addon.DiscPriest.SmiteCast ) then
+			cur_seg:IncChainSmiteCasts();
+		end
 	end
 	
 	if ( ttl_seg ) then
 		ttl_seg:IncChainCasts();
+		if ( spellID == addon.DiscPriest.SmiteCast ) then
+			cur_seg:IncChainSmiteCasts();
+		end
 	end
 end
 
@@ -42,9 +48,6 @@ function CastTracker:StartCast(unit,n)
 	
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( not spellInfo ) then
-		if ( HFA_ENABLE_FOR_TESTING ) then
-			print(n,spellID);
-		end
 		return;
 	end
 	
@@ -59,9 +62,15 @@ end
 --[[----------------------------------------------------------------------------
 	FinishCast() - unit_spellcast_succeeded player
 ------------------------------------------------------------------------------]]
-function CastTracker:FinishCast(unit,n,_,_,spellID)
+local casted = {};
+
+function CastTracker:FinishCast(unit,n,spellID,_,a)
 	if ( not addon.inCombat ) then
 		return;
+	end
+	
+	if not addon:isBFA() then
+		spellID = a;
 	end
 	
 	local curTime = GetTime();
@@ -70,21 +79,24 @@ function CastTracker:FinishCast(unit,n,_,_,spellID)
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( not spellInfo ) then
 		if ( HFA_ENABLE_FOR_TESTING ) then
-			print(n,spellID);
+			if not casted[spellID] then
+				print("Spellcast Discovered: ",spellID);
+				casted[spellID] = true;
+			end
 		end
 		return;
 	end
 	
 	if ( castedSpellID == spellID ) then 
 		--chain cast on casted spell
-		self:IncChainCasts();			
+		self:IncChainCasts(spellID);
 		endcast = curTime;
 	else
 		local start,dur = GetSpellCooldown(spellID);
 		
 		if ( start > 0 ) then
 			if ( addon.BuffTracker:CompareTimestamps(curTime,endcast,leniancy) ) then
-				self:IncChainCasts();		
+				self:IncChainCasts(spellID);		
 			end
 			endcast = start+dur;
 		else

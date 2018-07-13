@@ -6,21 +6,21 @@ local _ = false;
 
 
 --[[----------------------------------------------------------------------------
-	SpellType - Enumeration of specialization ids for each healing spec; 
+	SpellType - Enumeration of specialization ids for each healing spec;
 				and a "Shared" type for spells used by all healing specializations (Trinkets, etc.)
 ------------------------------------------------------------------------------]]
 local SpellType = {
 	DRUID = 105,
 	SHAMAN = 264,
 	HPRIEST = 257,
-	PALADIN = 65, 
+	PALADIN = 65,
 	MONK = 270,
 	DPRIEST = 256,
 	SHARED = 1,
 	IGNORED = -1
 }
 
-			
+
 
 --[[----------------------------------------------------------------------------
 	Spells - stored spell data. Used by the parsers/decomp methods.
@@ -80,7 +80,7 @@ end
 ------------------------------------------------------------------------------]]
 function Spells:Get(id)
 	return self[id and tonumber(id)];
-end 
+end
 
 
 
@@ -195,7 +195,7 @@ createSpellInfo(addon.Shaman.GiftOfTheQueen,	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.GiftOfTheQueen2,	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Riptide,			SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Rainfall,			SpellType.SHAMAN,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Shaman.ChainHeal, 		SpellType.SHAMAN,	T,T,_,T,T,T,T);	
+createSpellInfo(addon.Shaman.ChainHeal, 		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.HealingTide, 		SpellType.SHAMAN,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Shaman.HealingSurge,  	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.HealingStream, 	SpellType.SHAMAN,	T,T,T,T,T,T,T);
@@ -206,16 +206,16 @@ createSpellInfo(addon.Shaman.UnleashLife,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.WellSpring,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Ascendance,		SpellType.SHAMAN,	T,T,_,T,T,T,_);
 
-createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.CBTCast,			SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.CBTRecallCast,		SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.HealingRainCast,	SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.AscendanceCast,	SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.HSTCast,			SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.SLTCast,			SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.ESTCast,			SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.APTCast,			SpellType.IGNORED);	
-createSpellInfo(addon.Shaman.WellspringCast,	SpellType.IGNORED);	
+createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);
+createSpellInfo(addon.Shaman.CBTCast,			SpellType.IGNORED);
+createSpellInfo(addon.Shaman.CBTRecallCast,		SpellType.IGNORED);
+createSpellInfo(addon.Shaman.HealingRainCast,	SpellType.IGNORED);
+createSpellInfo(addon.Shaman.AscendanceCast,	SpellType.IGNORED);
+createSpellInfo(addon.Shaman.HSTCast,			SpellType.IGNORED);
+createSpellInfo(addon.Shaman.SLTCast,			SpellType.IGNORED);
+createSpellInfo(addon.Shaman.ESTCast,			SpellType.IGNORED);
+createSpellInfo(addon.Shaman.APTCast,			SpellType.IGNORED);
+createSpellInfo(addon.Shaman.WellspringCast,	SpellType.IGNORED);
 
 setRaidCooldown(addon.Shaman.HealingTide);
 
@@ -252,37 +252,37 @@ addon.HolyPriest.DivineStar = 110745;
 addon.HolyPriest.BodyAndMind = 214121;
 addon.HolyPriest.EchoOfLight = 77489;
 addon.HolyPriest.Salvation = 265202;
-
+addon.HolyPriest.HolyNova = 281265;
 addon.HolyPriest.PoMCast = 33076;
 addon.HolyPriest.DivineStarCast = 110744;
 addon.HolyPriest.HaloCast = 120517;
 addon.HolyPriest.DivineHymnCast = 64843;
 
 --																		I C H H V M L
-createSpellInfo(addon.HolyPriest.Renew,				SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.Serenity,			SpellType.HPRIEST,	T,T,_,T,T,_,T);		
+createSpellInfo(addon.HolyPriest.Renew,				SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.Serenity,			SpellType.HPRIEST,	T,T,_,T,T,_,T);
 createSpellInfo(addon.HolyPriest.PrayerOfHealing,	SpellType.HPRIEST,	T,T,_,T,T,_,T);
 createSpellInfo(addon.HolyPriest.Heal,				SpellType.HPRIEST,	T,T,_,T,T,_,T);
 createSpellInfo(addon.HolyPriest.FlashHeal,			SpellType.HPRIEST,	T,T,_,T,T,_,T);
-createSpellInfo(addon.HolyPriest.BindingHeal,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.DesperatePrayer,	SpellType.HPRIEST,	F,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.CosmicRipple,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.DivineHymn,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.Salvation,			SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.Sanctify,			SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.LightOfTuure,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.PrayerOfMending,	SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.Halo,				SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.CircleOfHealing,	SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.TrailOfLight,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.DivineStar,		SpellType.HPRIEST,	T,T,_,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.BodyAndMind,		SpellType.HPRIEST,	T,T,T,T,T,_,T);		
-createSpellInfo(addon.HolyPriest.EchoOfLight,		SpellType.HPRIEST,	T,T,_,T,T,T,T);	
-
-createSpellInfo(addon.HolyPriest,PoMCast,			SpellType.IGNORED);
-createSpellInfo(addon.HolyPriest,DivineStarCast,	SpellType.IGNORED);
-createSpellInfo(addon.HolyPriest,HaloCast,			SpellType.IGNORED);
-createSpellInfo(addon.HolyPriest,DivineHymnCast,	SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest.BindingHeal,		SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.DesperatePrayer,	SpellType.HPRIEST,	F,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.CosmicRipple,		SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.DivineHymn,		SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.Salvation,			SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.Sanctify,			SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.LightOfTuure,		SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.PrayerOfMending,	SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.CircleOfHealing,	SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.TrailOfLight,		SpellType.HPRIEST,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.BodyAndMind,		SpellType.HPRIEST,	T,T,T,T,T,_,T);
+createSpellInfo(addon.HolyPriest.EchoOfLight,		SpellType.HPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.HolyPriest.DivineStar,		SpellType.SHARED,	T,T,_,T,T,_,T); --shared with disc priest
+createSpellInfo(addon.HolyPriest.Halo,				SpellType.SHARED,	T,T,_,T,T,_,T); 
+createSpellInfo(addon.HolyPriest.HolyNova,			SpellType.SHARED,	T,T,_,T,T,_,T);
+createSpellInfo(addon.HolyPriest.PoMCast,			SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest.DivineStarCast,	SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest.HaloCast,			SpellType.IGNORED);
+createSpellInfo(addon.HolyPriest.DivineHymnCast,	SpellType.IGNORED);
 
 setRaidCooldown(addon.HolyPriest.DivineHymn);
 setRaidCooldown(addon.HolyPriest.Salvation);
@@ -437,13 +437,79 @@ setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
 	Discipline Priest
 ------------------------------------------------------------------------------]]
 addon.DiscPriest = {};
---[[
-PWS_Buff
-PowerWordShield = 17
-SmiteDamage
-AtonementHeal
-AtonementBuff
+addon.DiscPriest.AtonementHeal1 = 81751;
+addon.DiscPriest.AtonementHeal2 = 94472;
+addon.DiscPriest.ShadowMendHeal = 186263;
+addon.DiscPriest.RadianceHeal = 194509;
+addon.DiscPriest.PenanceHeal = 47750;
+addon.DiscPriest.ContritionHeal1 = 281469;
+addon.DiscPriest.ContritionHeal2 = 270501;
+addon.DiscPriest.ShadowCovenantHeal = 204065;
+addon.DiscPriest.ShadowWordPain = 589;
+addon.DiscPriest.PurgeTheWicked = 204197;
+addon.DiscPriest.Schism = 214621;
+addon.DiscPriest.SmiteCast = 585;
+addon.DiscPriest.SmiteAbsorb = 208771;
+addon.DiscPriest.PowerWordShield = 17;
+addon.DiscPriest.PetAttack = -1000; --spellid not used by the game, just an identifier we can use internally
+addon.DiscPriest.LuminousBarrierAbsorb = 271446;
 
+addon.DiscPriest.ShadowFiendCast = 34433;
+addon.DiscPriest.HolyNovaCast = 132157;
+addon.DiscPriest.PenanceCast1 = 47540;
+addon.DiscPriest.PenanceCast2 = 47666;
+addon.DiscPriest.AtonementBuff = 194384;
+
+--[[todo 
+SPELL_HEAL 81751 630 
+SPELL_DAMAGE 47666 21848 
+SPELL_HEAL 81751 630 
+SPELL_DAMAGE 47666 43695 
+SPELL_HEAL 94472 1261 
+SPELL_DAMAGE 47666 43695 
+SPELL_HEAL 94472 1261
+--find and include spellids for shadowfiend/mindbender swing
+]]
+--																			I C H H V M L
+createSpellInfo(addon.DiscPriest.AtonementHeal1,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.AtonementHeal2,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.ShadowMendHeal,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.RadianceHeal,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.PenanceHeal,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.ContritionHeal1,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.ContritionHeal2,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.ShadowCovenantHeal,	SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.ShadowWordPain,		SpellType.DPRIEST,	T,T,T,T,T,T,T);
+createSpellInfo(addon.DiscPriest.PurgeTheWicked,		SpellType.DPRIEST,	T,T,T,T,T,T,T);
+createSpellInfo(addon.DiscPriest.Schism,				SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.SmiteCast,				SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.SmiteAbsorb,			SpellType.DPRIEST,	T,T,_,T,T,_,_);
+createSpellInfo(addon.DiscPriest.PowerWordShield,		SpellType.DPRIEST,	T,T,_,T,T,T,_);
+createSpellInfo(addon.DiscPriest.LuminousBarrierAbsorb,	SpellType.DPRIEST,	T,T,_,T,T,T,_);
+createSpellInfo(addon.DiscPriest.PenanceCast1,			SpellType.DPRIEST,	T,T,_,T,T,T,_);
+createSpellInfo(addon.DiscPriest.PenanceCast2,			SpellType.DPRIEST,	T,T,_,T,T,T,_);
+createSpellInfo(addon.DiscPriest.PetAttack,				SpellType.DPRIEST,	T,T,T,T,T,T,_);
+
+createSpellInfo(addon.DiscPriest.ShadowFiendCast,		SpellType.IGNORED);
+createSpellInfo(addon.DiscPriest.HolyNovaCast,			SpellType.IGNORED);
+
+
+local function setTransfersToAtonement(id)
+	Spells[id].transfersToAtonement=true;
+end
+
+setTransfersToAtonement(addon.DiscPriest.SmiteCast);
+setTransfersToAtonement(addon.DiscPriest.Schism);
+setTransfersToAtonement(addon.DiscPriest.ShadowWordPain);
+setTransfersToAtonement(addon.DiscPriest.PurgeTheWicked);
+setTransfersToAtonement(addon.DiscPriest.PenanceCast1);
+setTransfersToAtonement(addon.DiscPriest.PenanceCast2);
+setTransfersToAtonement(addon.DiscPriest.PetAttack);
+
+setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
+setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
+
+--[[
 .transfersToAtonement = true
 ]]
 
@@ -458,9 +524,6 @@ addon.Trinket.IshkarFelshieldEmitter = 253277
 
 addon.Enchant = {};
 addon.Enchant.AncientPriestess = 228401;
-
-
-
 
 --Trinkets																	I C H H V M L
 createSpellInfo(addon.Trinket.HighfathersMachinations,	SpellType.SHARED,	_,T,_,_,T,_,_);	--Highfather's Machinations Trinket

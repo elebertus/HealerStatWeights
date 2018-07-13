@@ -55,6 +55,9 @@ function Segment.Create(id)
 	self.startTime = GetTime();
 	self.chainHaste = 0;
 	self.chainCasts = 0;
+	self.smiteCasts = 0;
+	self.smiteHealing = 0;
+	self.chainSmiteCasts = 0;
 	return self;
 end
 
@@ -98,6 +101,22 @@ function Segment:GetHasteHPCT()
 	return haste_hpct;
 end
 
+function Segment:GetHaste()
+	if ( addon:IsDiscPriest() ) then
+		if ( not self.smiteCasts or self.smiteCasts == 0 ) then
+			return self.t.haste_hpm;
+		end
+		
+		local avgSmiteHeal = self.smiteHealing/self.smiteCasts;
+		local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
+	
+		local haste_est_added = avgSmiteHeal * self.chainSmiteCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
+		
+		return self.t.haste_hpm + haste_est_added;
+	else
+		return self.t.haste_hpm;
+	end
+end
 
 
 --[[----------------------------------------------------------------------------
@@ -194,6 +213,17 @@ function Segment:IncFillerHealing(amount)
 	self.fillerHealing = self.fillerHealing + amount;
 end
 
+function Segment:IncChainSmiteCasts()
+	self.chainSmiteCasts = self.chainSmiteCasts + 1;
+end
+
+function Segment:IncSmiteCasts()
+	self.smiteCasts = self.smiteCasts + 1;
+end
+
+function Segment:IncSmiteAtonementHealing(amt)
+	self.smiteHealing = self.smiteHealing + amt;
+end
 
 function Segment:IncFillerCasts(manaCost)
 	self.fillerCasts = self.fillerCasts + 1;

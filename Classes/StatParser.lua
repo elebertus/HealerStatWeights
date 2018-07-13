@@ -57,6 +57,8 @@ function addon:SetupConversionFactors()
 		mastery_factor = 2/3;
 	elseif ( self:IsMistweaverMonk() ) then
 		mastery_factor = 1/3;
+	elseif ( self:IsDiscPriest() ) then
+		mastery_factor = 5/6;
 	end
 	
 	if ( addon:isBFA() ) then
@@ -254,12 +256,37 @@ function StatParser:IncFillerHealing(heal)
 	end
 end
 
+function StatParser:IncHealing(heal,updateFiller,updateTotal)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	if ( cur_seg ) then
+		if ( updateFiller ) then
+			cur_seg:IncFillerHealing(heal);
+		end
+		if ( updateTotal ) then
+			cur_seg:IncTotalHealing(heal);
+		end
+	end
+	if ( ttl_seg ) then
+		if ( updateFiller ) then
+			ttl_seg:IncFillerHealing(heal);
+		end
+		if ( updateTotal ) then
+			ttl_seg:IncTotalHealing(heal);
+		end
+	end
+end
+
 function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,V,M,ME,L)
 	local cur_seg = addon.SegmentManager:Get(0);
 	local ttl_seg = addon.SegmentManager:Get("Total");
 	local OH = overhealing>0
 	local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
-		
+
+	if ( ev == "SPELL_ABSORBED" ) then
+		print("ALLOC",spellInfo.spellID,heal,destUnit);
+	end
+	
 	if (not OH) then --allocate effective healing
 		_I 	 			= _Intellect(ev,spellInfo,heal,destUnit,SP,f);
 		_C				= _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,f) ;
@@ -304,7 +331,6 @@ function StatParser:AllocateDamageLeech(ev,spellInfo,amount,L)
 	if ( ttl_seg ) then
 		cur_seg:AllocateHeal(0,0,0,0,0,0,_L);
 	end
-	
 end
 
 --[[----------------------------------------------------------------------------
@@ -370,18 +396,16 @@ end
 --[[----------------------------------------------------------------------------
 	DecompDamageDone
 ------------------------------------------------------------------------------]]
-function StatParser:DecompDamageDone(amt)
-	local f = self[specId and tonumber(specId) or 0];
+function StatParser:DecompDamageDone(amt,spellID)
+	local f,specId = self:GetParserForCurrentSpec();
 	
-	--check if parser exist for current spec
-	if ( f and f.DamageEvent ) then 
-		--check if spellInfo is valid for current spec.
-		local spellInfo = addon.Spells:Get(spellID);
-		if ( spellInfo and (spellInfo.spellType == specId or spellInfo.spellType == addon.SpellType.SHARED) ) then
+	local spellInfo = addon.Spells:Get(spellID);
+	if ( spellInfo and (spellInfo.spellType == specId or spellInfo.spellType == addon.SpellType.SHARED) ) then
+		if ( f and f.DamageEvent ) then 
 			f.DamageEvent(spellInfo,amt);
-			
-			self:AllocateDamageLeech("SPELL_DAMAGE",spellInfo,amt,addon.ply_lee);
 		end
+		
+		self:AllocateDamageLeech("SPELL_DAMAGE",spellInfo,amt,addon.ply_lee);
 	end
 end
 

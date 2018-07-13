@@ -108,7 +108,7 @@ function addon:GetStatsForDisplay()
     
     local INT = 1;
     local CRIT = (usingCritResurg and (segment:GetManaRestoreValue()/addon.CritConv + t.crit) or t.crit) / t.int;
-    local HASTE = (usingHPCT and segment:GetHasteHPCT() or t.haste_hpm) / t.int;
+    local HASTE = (usingHPCT and segment:GetHasteHPCT() or segment:GetHaste()) / t.int;
     local VERS = (usingVersDR and t.vers_dr or t.vers) / t.int;
     local MAST = t.mast / t.int;
     local LEECH = t.leech / t.int;
@@ -301,6 +301,7 @@ function addon:StartFight(id)
 				self:CountBeaconsAtStartOfFight();
 			elseif ( self:IsDiscPriest() ) then
 				self.DiscPriest.PWSTracker:EncounterStart();
+				self.DiscPriest.LBTracker:EncounterStart();
 				self.DiscPriest.AtonementTracker:EncounterStart();
 			end
 				
