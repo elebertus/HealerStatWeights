@@ -283,7 +283,7 @@ function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,
 	local OH = overhealing>0
 	local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
 
-	if ( ev == "SPELL_ABSORBED" ) then
+	if ( HSW_ENABLE_FOR_TESTING ) then
 		print("ALLOC",spellInfo.spellID,heal,destUnit);
 	end
 	

@@ -68,7 +68,7 @@ end
 ------------------------------------------------------------------------------]]
 function addon:DiscoverIgnoredSpell(spellID)
 	createSpellInfo(spellID,SpellType.IGNORED);
-	if ( self:isBFA() ) then
+	if ( self:isBFA() and HSW_ENABLE_FOR_TESTING ) then
 		print("[HealerStatWeights]: Discovered SpellID \"" .. spellID .. "\" not in database. Tell the author!" );
 	end
 end
@@ -448,6 +448,7 @@ addon.DiscPriest.ShadowCovenantHeal = 204065;
 addon.DiscPriest.ShadowWordPain = 589;
 addon.DiscPriest.PurgeTheWicked = 204197;
 addon.DiscPriest.Schism = 214621;
+addon.DiscPriest.Solace = 129250;
 addon.DiscPriest.SmiteCast = 585;
 addon.DiscPriest.SmiteAbsorb = 208771;
 addon.DiscPriest.PowerWordShield = 17;
@@ -486,8 +487,9 @@ createSpellInfo(addon.DiscPriest.SmiteCast,				SpellType.DPRIEST,	T,T,_,T,T,T,T)
 createSpellInfo(addon.DiscPriest.SmiteAbsorb,			SpellType.DPRIEST,	T,T,_,T,T,_,_);
 createSpellInfo(addon.DiscPriest.PowerWordShield,		SpellType.DPRIEST,	T,T,_,T,T,T,_);
 createSpellInfo(addon.DiscPriest.LuminousBarrierAbsorb,	SpellType.DPRIEST,	T,T,_,T,T,T,_);
-createSpellInfo(addon.DiscPriest.PenanceCast1,			SpellType.DPRIEST,	T,T,_,T,T,T,_);
-createSpellInfo(addon.DiscPriest.PenanceCast2,			SpellType.DPRIEST,	T,T,_,T,T,T,_);
+createSpellInfo(addon.DiscPriest.PenanceCast1,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.PenanceCast2,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.Solace,				SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.PetAttack,				SpellType.DPRIEST,	T,T,T,T,T,T,_);
 
 createSpellInfo(addon.DiscPriest.ShadowFiendCast,		SpellType.IGNORED);
@@ -505,6 +507,7 @@ setTransfersToAtonement(addon.DiscPriest.PurgeTheWicked);
 setTransfersToAtonement(addon.DiscPriest.PenanceCast1);
 setTransfersToAtonement(addon.DiscPriest.PenanceCast2);
 setTransfersToAtonement(addon.DiscPriest.PetAttack);
+setTransfersToAtonement(addon.DiscPriest.Solace);
 
 setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
 setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
