@@ -63,7 +63,7 @@ function addon:SetupConversionFactors()
 	
 	if ( addon:isBFA() ) then
 		local level = UnitLevel("Player");
-		
+		level = math.max(level,110);
 		addon.CritConv 		= crt_cnv[level-110+1]*100;
 		addon.HasteConv 	= hst_cnv[level-110+1]*100;
 		addon.VersConv 		= vrs_cnv[level-110+1]*100;

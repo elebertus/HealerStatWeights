@@ -74,7 +74,6 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 				addon.StatParser:IncFillerHealing(heal);
 			end
 			
-			--print(spellInfo.spellID,event.data.spellID,event.data.hstHPM);
 			addon.StatParser:Allocate(ev,event.data,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,nil,event.L);
 		end
 		return true; --skip normal computation of healing event

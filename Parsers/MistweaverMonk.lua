@@ -15,7 +15,7 @@ end
 		- calculated from Gust of Mists healing (similar to Hpriest Echo of Light)
 ------------------------------------------------------------------------------]]
 local function _Mastery(ev,spellInfo,heal,destUnit,M)
-	if ( spellinfo.spellID == addon.Monk.GustOfMists ) then
+	if ( spellInfo.spellID == addon.Monk.GustOfMists ) then
 		if ( M == 0 ) then
 			return 0;
 		end

@@ -377,7 +377,7 @@ addon.Monk.ChiBurst = 130654;
 addon.Monk.GustOfMists = 191894;
 addon.Monk.SoothingMist = 115175;
 addon.Monk.EnvelopingMist = 124682;
-addon.Monk.EssenceFont = 191840;
+addon.Monk.EssenceFont = 191840; 
 addon.Monk.HealingElixir = 122281;
 addon.Monk.Revival = 115310;
 addon.Monk.RJW = 162530;
@@ -425,12 +425,15 @@ createSpellInfo(addon.Monk.ChiWaveCast,			SpellType.IGNORED);
 createSpellInfo(addon.Monk.RJWCast,				SpellType.IGNORED);
 createSpellInfo(addon.Monk.ChiJiCast,			SpellType.IGNORED);
 
-
 setRaidCooldown(addon.Monk.Revival);
 
 setFillerSpell(addon.Monk.Vivify, 0.035);
 setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
 
+--mana buffs
+--197908 mana tea 50% reduced mana cost
+--197916 vivify -25% manaCost
+--197919 enveloping mist -25% manaCost
 
 
 --[[----------------------------------------------------------------------------
