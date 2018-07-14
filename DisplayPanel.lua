@@ -303,6 +303,8 @@ function addon:StartFight(id)
 				self.DiscPriest.PWSTracker:EncounterStart();
 				self.DiscPriest.LBTracker:EncounterStart();
 				self.DiscPriest.AtonementTracker:EncounterStart();
+			elseif ( self:IsHolyPriest() ) then
+				self.HolyPriest.EOLTracker:EncounterStart();
 			end
 				
             self.SegmentManager:Enqueue(id or "Unknown");

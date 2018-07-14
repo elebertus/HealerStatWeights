@@ -112,18 +112,14 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 				summons[destGUID] = true;
 			end
 		
-			--Track mana gained by resurgence
-			if ( spellID == addon.Shaman.Resurgence ) then
+			if ( spellID == addon.Shaman.Resurgence ) then --shaman resurgence
 				if ( ev == "SPELL_ENERGIZE" ) then
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					cur_seg:IncManaRestore(amount);
 					ttl_seg:IncManaRestore(amount);
 				end
-			end
-		
-			--paladin beacon tracking
-			if ( addon.BeaconBuffs[spellID] ) then
+			elseif ( addon.BeaconBuffs[spellID] ) then --paladin beacon
 				if ( ev == "SPELL_AURA_APPLIED") then
 					addon.BeaconCount = addon.BeaconCount + 1;
 					addon.BeaconUnits[destGUID]=true;	
@@ -131,10 +127,15 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 					addon.BeaconCount = addon.BeaconCount - 1;
 					addon.BeaconUnits[destGUID]=false;
 				end
-			end
-			
-			-- Disc atonement tracking
-			if ( spellID == addon.DiscPriest.AtonementBuff ) then
+			elseif ( spellID == addon.HolyPriest.EchoOfLight ) then --holy priest mastery (echo of light) 
+				if ( ev == "SPELL_AURA_APPLIED" ) then
+					addon.HolyPriest.EOLTracker:Apply(destGUID);
+				elseif ( ev == "SPELL_AURA_REMOVED" ) then
+					addon.HolyPriest.EOLTracker:Remove(destGUID);
+				elseif ( ev == "SPELL_AURA_REFRESH" ) then
+					addon.HolyPriest.EOLTracker:Refresh(destGUID);
+				end
+			elseif ( spellID == addon.DiscPriest.AtonementBuff ) then -- Disc atonement tracking
 				if ( ev == "SPELL_AURA_APPLIED" ) then
 					addon.DiscPriest.AtonementTracker:ApplyOrRefresh(destGUID);
 				elseif ( ev == "SPELL_AURA_REMOVED" ) then
@@ -142,19 +143,13 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 				elseif ( ev == "SPELL_AURA_REFRESH" ) then
 					addon.DiscPriest.AtonementTracker:ApplyOrRefresh(destGUID);
 				end
-			end		
-			
-			--LB Tracking
-			if ( spellID == addon.DiscPriest.LuminousBarrierAbsorb ) then
+			elseif ( spellID == addon.DiscPriest.LuminousBarrierAbsorb ) then --Luminous Barrier Tracking
 				if ( ev == "SPELL_AURA_APPLIED" ) then
 					addon.DiscPriest.LBTracker:Apply(destGUID,overhealing);
 				elseif ( ev == "SPELL_AURA_REMOVED" ) then
 					addon.DiscPriest.LBTracker:Remove(destGUID,overhealing);
 				end
-			end
-			
-			-- Disc PW:S tracking (part 1 of 2)
-			if ( spellID == addon.DiscPriest.PowerWordShield ) then
+			elseif ( spellID == addon.DiscPriest.PowerWordShield ) then -- Disc PW:S tracking (part 1 of 2)
 				if ( ev == "SPELL_AURA_APPLIED" ) then
 					addon.DiscPriest.PWSTracker:ApplyOrRefresh(destGUID,overhealing); --16th arg is amount
 				elseif ( ev == "SPELL_AURA_REMOVED" ) then

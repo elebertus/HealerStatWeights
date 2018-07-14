@@ -290,6 +290,7 @@ setRaidCooldown(addon.HolyPriest.Salvation);
 setHasteHpmOnlyOnPeriodic(addon.HolyPriest.Renew);
 
 setFillerSpell(addon.HolyPriest.Heal, 0.017);
+setFillerSpell(addon.HolyPriest.BindingHeal, 0.017);
 setFillerSpell(addon.HolyPriest.FlashHeal, 0.028);
 setFillerSpell(addon.HolyPriest.PrayerOfHealing,0.045);
 
@@ -398,6 +399,10 @@ addon.Monk.ChiWaveCast = 115098;
 addon.Monk.RJWCast = 196725;
 addon.Monk.ChiJiCast = 198664;
 
+addon.Monk.ManaTea = 197908;
+addon.Monk.LifeCyclesVivify = 197916;
+addon.Monk.LifeCyclesEnvelopingMist = 197919;
+
 --																I C H H V M L
 createSpellInfo(addon.Monk.RenewingMist,		SpellType.MONK,	T,T,T,T,T,_,T);
 createSpellInfo(addon.Monk.RJW,					SpellType.MONK,	T,T,_,T,T,_,T);
@@ -430,10 +435,10 @@ setRaidCooldown(addon.Monk.Revival);
 setFillerSpell(addon.Monk.Vivify, 0.035);
 setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
 
---mana buffs
---197908 mana tea 50% reduced mana cost
---197916 vivify -25% manaCost
---197919 enveloping mist -25% manaCost
+addon.BuffTracker:Track(addon.Monk.ManaTea);
+addon.BuffTracker:Track(addon.Monk.LifeCyclesVivify);
+addon.BuffTracker:Track(addon.Monk.LifeCyclesEnvelopingMist);
+
 
 
 --[[----------------------------------------------------------------------------
@@ -464,16 +469,6 @@ addon.DiscPriest.PenanceCast1 = 47540;
 addon.DiscPriest.PenanceCast2 = 47666;
 addon.DiscPriest.AtonementBuff = 194384;
 
---[[todo 
-SPELL_HEAL 81751 630 
-SPELL_DAMAGE 47666 21848 
-SPELL_HEAL 81751 630 
-SPELL_DAMAGE 47666 43695 
-SPELL_HEAL 94472 1261 
-SPELL_DAMAGE 47666 43695 
-SPELL_HEAL 94472 1261
---find and include spellids for shadowfiend/mindbender swing
-]]
 --																			I C H H V M L
 createSpellInfo(addon.DiscPriest.AtonementHeal1,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.AtonementHeal2,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
@@ -514,10 +509,6 @@ setTransfersToAtonement(addon.DiscPriest.Solace);
 
 setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
 setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
-
---[[
-.transfersToAtonement = true
-]]
 
 --[[----------------------------------------------------------------------------
 	Shared Spells

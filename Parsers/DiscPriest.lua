@@ -109,7 +109,6 @@ function LBTracker:Apply(destGUID,amount)
 		self[u].H = addon.ply_hst;
 		self[u].M = addon.ply_mst;
 		self[u].V = addon.ply_vrs;
-		self[u].I = addon.ply_sp;
 		self[u].ts = GetTime();
 	end
 end
@@ -219,7 +218,6 @@ function PWSTracker:ApplyOrRefresh(destGUID,amount)
 		self[u].M = addon.ply_mst;
 		self[u].H = addon.ply_hst;
 		self[u].V = addon.ply_vrs;
-		self[u].I = addon.ply_sp;
 		self[u].ts = GetTime();
 	end
 end
