@@ -449,10 +449,22 @@ function addon:AddHistoricalSegment(segment)
 	addon.History:Enqueue(h);
 end
 
+local function addExampleSegment()
+	local s = addon.Segment.Create("Example Segment!");
+	s:AllocateHeal(1,math.random(),math.random(),math.random(),math.random(),math.random(),math.random(),math.random(),math.random());
+	s:AllocateHealDR(math.random()*0.1);
+	addon:AddHistoricalSegment(s);
+end
+
 function addon:GetHistoricalSegmentsList()
 	local t = {};
 	local n = addon.History:Size();
 	local h;
+	
+	if ( n == 0 ) then
+		addExampleSegment();
+		n = addon.History:Size();
+	end
 	
 	for i=0,n-1,1 do
 		h = addon.History:Get(i);
