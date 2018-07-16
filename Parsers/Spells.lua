@@ -37,6 +37,7 @@ local function createSpellInfo(id, spellType, isIntScaled, isCritScaled, isHaste
 		spellID = id,
 		spellType = spellType,
 		int = isIntScaled,
+		sp = isIntScaled,
 		crt = isCritScaled,
 		hstHPM = isHasteHPMScaled,
 		hstHPCT = isHasteHPCTScaled,
@@ -58,9 +59,10 @@ local function setHasteHpmOnlyOnPeriodic(id)
 	Spells[id].hstHPMPeriodic=true;
 end
 
-local function setFillerSpell(id,manaCost)
+local function setFillerSpell(id,manaCost,f_multiplier)
 	Spells[id].filler = true;
 	Spells[id].manaCost = manaCost;
+	Spells[id].manaCostAdjustmentMultiplier = f_multiplier;
 end
 
 --[[----------------------------------------------------------------------------
@@ -68,8 +70,8 @@ end
 ------------------------------------------------------------------------------]]
 function addon:DiscoverIgnoredSpell(spellID)
 	createSpellInfo(spellID,SpellType.IGNORED);
-	if ( self:isBFA() and HSW_ENABLE_FOR_TESTING ) then
-		print("[HealerStatWeights]: Discovered SpellID \"" .. spellID .. "\" not in database. Tell the author!" );
+	if ( HSW_ENABLE_FOR_TESTING ) then
+		self:Msg("[HealerStatWeights]: Discovered SpellID \"" .. spellID .. "\" not in database. Tell the author!" );
 	end
 end
 
@@ -142,6 +144,15 @@ setRaidCooldown(addon.Druid.TranquilityHoT);
 
 setHasteHpmOnlyOnPeriodic(addon.Druid.Regrowth);
 
+local function RegrowthAbundanceManaCostMultiplier()
+	local s = addon.BuffTracker:Get(addon.Druid.AbundanceBuff)
+	if ( s and s > 0 ) then
+		return math.max(0, 1.0 - 0.06*s);
+	end
+	return 1.0;
+end
+
+setFillerSpell(addon.Druid.Regrowth, 	 0.28, RegrowthAbundanceManaCostMultiplier);
 setFillerSpell(addon.Druid.Rejuvenation, 0.22);
 setFillerSpell(addon.Druid.Germination,  0.22);
 
@@ -169,8 +180,8 @@ addon.Shaman.UnleashLife = 73685;
 addon.Shaman.WellSpring = 197997;
 addon.Shaman.SpiritLink = 98021;
 addon.Shaman.Ascendance = 114083;
--- Nature's Guardian
--- Earth Shield
+addon.Shaman.EarthenWallTotem = 201633;
+addon.Shaman.EarthShield = 379;
 
 addon.Shaman.CloudburstBuff = 157504;
 addon.Shaman.TidalWavesBuff = 53390;
@@ -205,6 +216,8 @@ createSpellInfo(addon.Shaman.Undulation,	 	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.UnleashLife,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.WellSpring,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Ascendance,		SpellType.SHAMAN,	T,T,_,T,T,T,_);
+createSpellInfo(addon.Shaman.EarthenWallTotem,	SpellType.SHAMAN,	T,_,_,T,_,_,_);
+createSpellInfo(addon.Shaman.EarthShield,		SpellType.SHAMAN,	T,_,_,T,T,T,_); --int per hit; stamina overall
 
 createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);
 createSpellInfo(addon.Shaman.CBTCast,			SpellType.IGNORED);
@@ -312,7 +325,7 @@ addon.Paladin.LightOfTheMartyr = 183998;
 addon.Paladin.AuraOfMercy = 210291;
 addon.Paladin.AuraOfSacrifice = 210383;
 addon.Paladin.JudgementOfLight = 183811;
-addon.Paladin.BeaconOfLight = 53652
+addon.Paladin.BeaconOfLight = 53652;
 addon.Paladin.LayOnHands = 633;
 addon.Paladin.AvengingCrusader = 216371;
 
@@ -360,9 +373,9 @@ setTransfersToBeacon(addon.Paladin.LightOfTheMartyr);
 
 setRaidCooldown(addon.Paladin.AuraOfMercy);
 
-setFillerSpell(addon.Paladin.HolyLight, 0.024);
-setFillerSpell(addon.Paladin.FlashOfLight, 0.036);
-setFillerSpell(addon.Paladin.LightOfTheMartyr, 0.015);
+setFillerSpell(addon.Paladin.HolyLight, 0.026);
+setFillerSpell(addon.Paladin.FlashOfLight, 0.044);
+setFillerSpell(addon.Paladin.LightOfTheMartyr, 0.014);
 
 
 
@@ -432,12 +445,32 @@ createSpellInfo(addon.Monk.ChiJiCast,			SpellType.IGNORED);
 
 setRaidCooldown(addon.Monk.Revival);
 
-setFillerSpell(addon.Monk.Vivify, 0.035);
-setFillerSpell(addon.Monk.EnvelopingMist, 0.052);
-
 addon.BuffTracker:Track(addon.Monk.ManaTea);
 addon.BuffTracker:Track(addon.Monk.LifeCyclesVivify);
 addon.BuffTracker:Track(addon.Monk.LifeCyclesEnvelopingMist);
+
+local function LifeCyclesVivifyManaCostMultiplier()
+	local s = addon.BuffTracker:Get(addon.Monk.LifeCyclesVivify);
+	local ret = 1;
+	if ( s and s > 0 ) then
+		return 0.75;
+	end
+	return 1.0;
+end
+
+local function LifeCyclesEnvelopingMistManaCostMultiplier()
+	local s = addon.BuffTracker:Get(addon.Monk.LifeCyclesEnvelopingMist)
+	if ( s and s > 0 ) then
+		return 0.75;
+	end
+	return 1.0;
+end
+
+setFillerSpell(addon.Monk.Vivify, 0.035, LifeCyclesVivifyManaCostMultiplier);
+setFillerSpell(addon.Monk.EnvelopingMist, 0.052, LifeCyclesEnvelopingMistManaCostMultiplier);
+
+
+
 
 
 
@@ -518,15 +551,25 @@ addon.Trinket.HighfathersMachinations = 253288
 addon.Trinket.EonarsEmeraldBlossom = 253288
 addon.Trinket.EonarsVerdantEmbrace = 257444
 addon.Trinket.IshkarFelshieldEmitter = 253277
+addon.Trinket.PrototypeDecimator = 255629;
+addon.Trinket.ShadowBlades = 257702;
+addon.Trinket.LegionBombardment = 257376;
 
 addon.Enchant = {};
 addon.Enchant.AncientPriestess = 228401;
 
 --Trinkets																	I C H H V M L
-createSpellInfo(addon.Trinket.HighfathersMachinations,	SpellType.SHARED,	_,T,_,_,T,_,_);	--Highfather's Machinations Trinket
-createSpellInfo(addon.Trinket.EonarsEmeraldBlossom,		SpellType.SHARED,	_,T,T,_,T,_,_);	--Eonars trinket (Emerald Blossom)
-createSpellInfo(addon.Trinket.EonarsVerdantEmbrace,		SpellType.SHARED,	_,_,_,_,T,_,_);	--Eonars trinket (Verdant Embrace)
-createSpellInfo(addon.Trinket.IshkarFelshieldEmitter,	SpellType.SHARED,	_,_,_,_,T,_,_);	--Ishkar's Felshield Emmitter
+createSpellInfo(addon.Trinket.HighfathersMachinations,	SpellType.SHARED,	_,T,_,_,T,_,_);
+createSpellInfo(addon.Trinket.EonarsEmeraldBlossom,		SpellType.SHARED,	_,T,T,_,T,_,_);
+createSpellInfo(addon.Trinket.EonarsVerdantEmbrace,		SpellType.SHARED,	_,_,_,_,T,_,_);
+createSpellInfo(addon.Trinket.IshkarFelshieldEmitter,	SpellType.SHARED,	_,_,_,_,T,_,_);
+createSpellInfo(addon.Trinket.PrototypeDecimator,		SpellType.SHARED,	_,T,_,_,T,_,_);
+createSpellInfo(addon.Trinket.ShadowBlades,				SpellType.SHARED,	_,T,_,_,T,_,_);
+createSpellInfo(addon.Trinket.LegionBombardment,		SpellType.SHARED,	_,T,_,_,T,_,_);
+
+setTransfersToAtonement(addon.Trinket.PrototypeDecimator);
+setTransfersToAtonement(addon.Trinket.ShadowBlades);
+setTransfersToAtonement(addon.Trinket.LegionBombardment);
 
 --Enchants
 createSpellInfo(addon.Enchant.AncientPriestess, 		SpellType.SHARED,	T,T,T,_,T,_,_);

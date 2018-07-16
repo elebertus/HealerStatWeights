@@ -172,6 +172,18 @@ end
 
 
 
+
+--[[----------------------------------------------------------------------------
+    Msg - print a message to chat
+------------------------------------------------------------------------------]]
+function addon:Msg(s)
+	if s then
+		DEFAULT_CHAT_FRAME:AddMessage("|cff00fbf6[HSW]|r "..tostring(s),1,1,1);
+	end
+end
+
+
+
 --[[----------------------------------------------------------------------------
     Enabled - Check if the addon should be enabled.
 ------------------------------------------------------------------------------]]
@@ -220,7 +232,7 @@ end
     Lock - lock the stats panel
 ------------------------------------------------------------------------------]]
 function addon:Lock()
-    print("Healer Stat Weights frame locked.")
+    self:Msg("Healer Stat Weights frame locked.")
     self.hsw.db.global.frameLocked = true;
     self.frame:EnableMouse(not self.hsw.db.global.frameLocked);
     self.frame:SetMovable(not self.hsw.db.global.frameLocked);
@@ -232,7 +244,7 @@ end
     Unlock - unlock the stats panel
 ------------------------------------------------------------------------------]]
 function addon:Unlock()
-    print("Healer Stat Weights frame unlocked.")
+    self:Msg("Healer Stat Weights frame unlocked.")
     self.hsw.db.global.frameLocked = false;
     self.frame:EnableMouse(not self.hsw.db.global.frameLocked);
     self.frame:SetMovable(not self.hsw.db.global.frameLocked);
@@ -257,6 +269,8 @@ StaticPopupDialogs[pawn_dialog_name] = {
     button1 = OKAY,
     button2 = CANCEL,
     hasEditBox = true,
+	editBoxWidth = 600,
+	maxLetters = 9999,
     OnShow = function (self, data)
         local s = addon:GetPawnString();
         print(s);
@@ -493,7 +507,7 @@ function addon:SetupFrame()
             if ( not addon.inCombat ) then
                 StaticPopup_Show(clearsegments_dialog_name); 
             else
-                print("[HSW] Cannot clear segments while in combat.");
+                addon:Msg("[HSW] Cannot clear segments while in combat.");
             end
         end);
         makeButton(frame,"Configure","Open the options menu","Interface\\Buttons\\UI-OptionsButton", function() 

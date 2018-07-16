@@ -78,9 +78,9 @@ function CastTracker:FinishCast(unit,n,spellID,_,a)
 		
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( not spellInfo ) then
-		if ( HFA_ENABLE_FOR_TESTING ) then
+		if ( HSW_ENABLE_FOR_TESTING ) then
 			if not casted[spellID] then
-				print("Spellcast Discovered: ",spellID);
+				addon:Msg("Spellcast Discovered: "..tostring(spellID));
 				casted[spellID] = true;
 			end
 		end

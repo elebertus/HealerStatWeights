@@ -57,6 +57,7 @@ function Queue.CreateSpellQueue(fMasteryEffect)
 			ts = GetTime(),
 			data = data,
 			ME = masteryEffect,
+			CB = addon.ply_crtbonus,
 			C = addon.ply_crt,
 			SP = addon.ply_sp,
 			H = addon.ply_hst,

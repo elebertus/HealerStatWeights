@@ -17,8 +17,8 @@ local function getStatTable()
 	local t = {};
 	t.int = 0;
 	t.crit = 0;
-	t.haste_hpm = 0;
-	t.haste_hpct = 0;
+	t.haste_hpm = 0; --haste hpc
+	t.haste_hpct = 0;--haste hpct's upper-bound
 	t.vers = 0;
 	t.vers_dr = 0;
 	t.mast = 0;
@@ -80,7 +80,11 @@ function Segment:GetMP5()
 	local fillerHPM = self.fillerHealing / (self.fillerManaSpent*addon.ManaPool);
 	local HPS = self.totalHealing / duration;
 
-	return int * (fillerHPM/5) / (HPS);
+	if ( HPS > 0 ) then
+		return int * (fillerHPM/5) / (HPS);
+	end
+	
+	return 0;
 end
 
 
@@ -90,7 +94,7 @@ end
 ------------------------------------------------------------------------------]]
 function Segment:GetHasteHPCT()
 	if ( self.chainCasts == 0 or self.fillerCasts == 0 ) then
-		return 0;
+		return self.t.haste_hpm;
 	end
 	
 	local avgFillerHealingPerCast = self.fillerHealing / self.fillerCasts;

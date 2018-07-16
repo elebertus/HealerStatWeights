@@ -93,12 +93,17 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 					local cur_seg = addon.SegmentManager:Get(0);
 					local ttl_seg = addon.SegmentManager:Get("Total");
 					
+					local cost = spellInfo.manaCost;
+					if ( spellInfo.manaCostAdjustmentMultiplier ) then
+						cost = cost * spellInfo.manaCostAdjustmentMultiplier();
+					end
+					
 					if ( cur_seg ) then
-						cur_seg:IncFillerCasts(spellInfo.manaCost);
+						cur_seg:IncFillerCasts(cost,spellInfo.manaCostAdjustmentMultiplier);
 					end
 					
 					if ( ttl_seg ) then
-						ttl_seg:IncFillerCasts(spellInfo.manaCost);
+						ttl_seg:IncFillerCasts(cost,spellInfo.manaCostAdjustmentMultiplier);
 					end
 					
 					if spellInfo.spellID == addon.DiscPriest.SmiteCast then
@@ -176,13 +181,15 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 				abs_amount = arg19;
 			end
 	
-			if ( abs_srcGUID == UnitGUID("Player") ) then
+			if ( abs_srcGUID == UnitGUID("Player") or summons[abs_srcGUID] ) then
 				if (abs_spellID == addon.DiscPriest.PowerWordShield ) then 
 					addon.DiscPriest.PWSTracker:Absorb(destGUID,abs_amount);
 				elseif ( abs_spellID == addon.DiscPriest.SmiteAbsorb ) then
 					addon.DiscPriest:AbsorbSmite(destGUID,abs_amount);
-				end
-			end			
+				elseif ( abs_spellID == addon.Shaman.EarthenWallTotem ) then
+					addon.Shaman:AbsorbEarthenWallTotem(destGUID,abs_amount);
+				end				
+			end	
 		end
 
 		

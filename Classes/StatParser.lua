@@ -284,7 +284,7 @@ function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,
 	local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
 
 	if ( HSW_ENABLE_FOR_TESTING ) then
-		print("ALLOC",spellInfo.spellID,heal,destUnit);
+		addon:Msg("allocate spellid="..spellInfo.spellID.." destunit="..destUnit.." amount="..heal);
 	end
 	
 	if (not OH) then --allocate effective healing
@@ -368,6 +368,7 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 					end
 					
 					--Reduce crit heals down to the non-crit amount
+					local orig_heal = heal;
 					if ( critFlag ) then
 						heal = heal / ( 1 + addon.ply_crtbonus );
 						overhealing = OH and overhealing / ( 1 + addon.ply_crtbonus ) or 0;
@@ -376,7 +377,7 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 					--Allow the class parser to do pre-computations on this heal event
 					local skipAllocate=false;
 					if ( f.HealEvent ) then
-						skipAllocate = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f);
+						skipAllocate = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,orig_heal);
 					end
 										
 					--Allocate healing derivatives for each stat
