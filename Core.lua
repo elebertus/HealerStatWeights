@@ -413,14 +413,52 @@ end
 
 --[[----------------------------------------------------------------------------
 	History - store/retrieve historical segments
+	
+	
+	self.instance.id = map_id;
+	self.instance.name = map_name;
+	self.instance.level = map_level;
+	self.instance.difficultyId = id;
+	self.instance.bossFight = isBossFight;
+	
 ------------------------------------------------------------------------------]]
 addon.History = addon.Queue.CreateHistoryQueue();
+addon.MythicPlusActive = false;
+local dungeonCombinedSegment = nil;
+
+local function mergeDungeonSegments(segment)
+	local info = segment:GetInstanceInfo();
+	
+	if not dungeonCombinedSegment then --create empty segment
+		local str = info.name;
+		if info.level then
+			str = str .. " +"..info.level;
+		end	
+		dungeonCombinedSegment = addon.Segment.Create(str);
+		dungeonCombinedSegment:SetupInstanceInfo(true);
+		dungeonCombinedSegment:End();
+	end
+		
+	dungeonCombinedSegment:MergeSegment(segment);
+end
+
+function addon:TryAddTotalInstanceSegmentToHistory() --handle adding the total dungeon segment
+	if ( dungeonCombinedSegment ) then
+		self:AddHistoricalSegment(dungeonCombinedSegment);
+		dungeonCombinedSegment = nil
+	end
+end
 
 function addon:AddHistoricalSegment(segment)
     if ( not segment or not segment.t or segment.t.int==0) then
 		--dont add empty segments
         return
-    end
+	end
+	
+	if ( addon.MythicPlusActive ) then --try to merge this segment into the current running history
+		mergeDungeonSegments(segment);
+	end
+	local info = segment:GetInstanceInfo();
 	
     local h = {};
 	local duration = segment:GetDuration() or 0;
@@ -431,6 +469,7 @@ function addon:AddHistoricalSegment(segment)
     local i = GetSpecialization();
 	local specId = GetSpecializationInfo(i);
 	
+	h.tab = info.bossFight and "" or "    ";
 	h[sgmt_label] = segment.id;
 	h[dur_label] = t_str;
 	h[cls_label] = spec_labels[specId] or "Unknown";
@@ -446,7 +485,7 @@ function addon:AddHistoricalSegment(segment)
 	h[lee_label] = segment.t.leech / segment.t.int;
 	h[mp5_label] = segment:GetMP5();
 	
-	addon.History:Enqueue(h);
+	addon.History:Enqueue(h,segment);
 end
 
 local function addExampleSegment()
@@ -469,7 +508,7 @@ function addon:GetHistoricalSegmentsList()
 	for i=0,n-1,1 do
 		h = addon.History:Get(i);
 		if ( h ) then
-			t[i] = h[sgmt_label] .. " " .. h[dur_label];
+			t[i] = (h.tab or "") .. h[sgmt_label] .. " " .. h[dur_label];
 		end
 	end
 	

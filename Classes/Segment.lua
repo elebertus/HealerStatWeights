@@ -58,6 +58,13 @@ function Segment.Create(id)
 	self.smiteCasts = 0;
 	self.smiteHealing = 0;
 	self.chainSmiteCasts = 0;
+	
+	self.instance = {};
+	self.instance.id = -1;
+	self.instance.name = "";
+	self.instance.level = -1;
+	self.instance.difficultyId = -1;
+	self.instance.bossFight = false;
 	return self;
 end
 
@@ -177,20 +184,6 @@ function Segment:End()
 end
 
 
---[[----------------------------------------------------------------------------
-	AllocateDamage - increment cumulative damage totals for the given stats
-------------------------------------------------------------------------------]]
---[[
-function Segment:AllocateDamage(int,crit,haste,vers,mast)
-	self.t.int		 	= self.t.int		 + int;
-	self.t.crit			= self.t.crit		 + crit;
-	self.t.haste_hpct	= self.t.haste_hpct  + haste;
-	self.t.vers 	 	= self.t.vers		 + vers;
-	self.t.mast 	 	= self.t.mast		 + mast;
-end
-]]
-
-
 
 --[[----------------------------------------------------------------------------
 	AllocateHealDR - increment cumulative heal DR totals for the given stats
@@ -245,6 +238,50 @@ function Segment:IncBucket(key,amount)
 	end
 	self[key] = self[key]+amount;
 end
+
+
+
+--[[----------------------------------------------------------------------------
+	SetupInstanceInfo - information about the instance this segment uses
+------------------------------------------------------------------------------]]
+function Segment:SetupInstanceInfo(isBossFight)
+	local map_level, _, _ = C_ChallengeMode.GetActiveKeystoneInfo();
+	local map_id = C_ChallengeMode.GetActiveChallengeMapID();
+	local map_name = map_id and C_ChallengeMode.GetMapInfo(map_id) or "";	
+	local _,_,id = GetInstanceInfo();
+	
+	self.instance.id = map_id;
+	self.instance.name = map_name;
+	self.instance.level = map_level;
+	self.instance.difficultyId = id;
+	self.instance.bossFight = isBossFight;
+end
+
+function Segment:GetInstanceInfo()
+	return self.instance;
+end
+
+--[[----------------------------------------------------------------------------
+	MergeSegment - merge information from another segment into this one.
+				 - only call this after both segments have Ended with segment:End()
+------------------------------------------------------------------------------]]
+function Segment:MergeSegment(other)
+	for k,v in pairs(self.t) do
+		if ( type(v) == "number" ) then
+			self.t[k] = self.t[k] + other.t[k];
+		end
+	end
+	
+	for k,v in pairs(self) do
+		if ( type(v) == "number" ) then
+			self[k] = self[k] + other[k];
+		end
+	end
+	
+	self.totalDuration = self.totalDuration + other:GetDuration()
+end
+
+
 
 --[[----------------------------------------------------------------------------
 	Debug - print internal values of this segment to chat

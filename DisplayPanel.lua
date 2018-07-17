@@ -323,7 +323,7 @@ function addon:StartFight(id)
 				
             self.SegmentManager:Enqueue(id or "Unknown");
             if ( id ) then
-                self.SegmentManager:SetCurrentId(id);
+                self.SegmentManager:SetCurrentId(id,true);
             end
             
             --Set start time of total segment to match current segment
@@ -344,21 +344,19 @@ end
 --[[----------------------------------------------------------------------------
     EndFight - End current combat segment 
 ------------------------------------------------------------------------------]]
-function addon:EndFight()
+function addon:EndFight(encounter_end)
     if ( self.inCombat ) then
-        self.inCombat = false;
-        
-        local cur_seg = self.SegmentManager:Get(0);
-        local ttl_seg = self.SegmentManager:Get("Total");
-        if ( cur_seg ) then
-            cur_seg:End();
+		self.inCombat = false;
+
+		local cur_seg = self.SegmentManager:Get(0);
+		local ttl_seg = self.SegmentManager:Get("Total");
+		if ( cur_seg ) then
+			cur_seg:End();
 			self:AddHistoricalSegment(cur_seg);
 		end
-        if ( ttl_seg ) then
-            ttl_seg:End();
-        end
-		
-		
+		if ( ttl_seg ) then
+			ttl_seg:End();
+		end
     end
 end
 

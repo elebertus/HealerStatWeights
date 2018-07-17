@@ -4,7 +4,6 @@ addon.currentSegment=0;
 
 
 
-
 --[[----------------------------------------------------------------------------
 	Combat Start
 ------------------------------------------------------------------------------]]
@@ -18,7 +17,9 @@ end
 	Combat End
 ------------------------------------------------------------------------------]]
 function addon.hsw:PLAYER_REGEN_ENABLED()
-	addon:EndFight();
+	if not addon.inBossFight then
+		addon:EndFight();
+	end
 end
 
 
@@ -28,6 +29,17 @@ end
 ------------------------------------------------------------------------------]]
 function addon.hsw:ENCOUNTER_START(eventName,encounterId,encounterName)
 	addon:StartFight(encounterName);
+	addon.inBossFight = true; --wait til encounter_end to stop segment
+end
+
+
+
+--[[----------------------------------------------------------------------------
+	Encounter start
+------------------------------------------------------------------------------]]
+function addon.hsw:ENCOUNTER_END()
+	addon.inBossFight = false;
+	addon:EndFight();
 end
 
 
@@ -48,6 +60,8 @@ function addon.hsw:PLAYER_ENTERING_WORLD()
 	addon:SetupConversionFactors();
 	addon:SetupFrame();
 	addon:AdjustVisibility();
+	addon.MythicPlusActive=false;
+	addon:TryAddTotalInstanceSegmentToHistory();
 end
 
 
@@ -69,6 +83,25 @@ function addon.hsw:GROUP_ROSTER_UPDATE()
 		addon.UnitManager:Cache(); 
 	end
 end
+
+
+
+--[[----------------------------------------------------------------------------
+	GROUP_ROSTER_UPDATE
+------------------------------------------------------------------------------]]
+function addon.hsw:CHALLENGE_MODE_COMPLETED()
+	addon.MythicPlusActive=false;
+	addon:TryAddTotalInstanceSegmentToHistory();
+end
+function addon.hsw:CHALLENGE_MODE_RESET()
+	addon.MythicPlusActive=false;
+	addon:TryAddTotalInstanceSegmentToHistory();
+end
+function addon.hsw:CHALLENGE_MODE_START()
+	addon.MythicPlusActive=true;
+end
+
+
 
 
 
@@ -165,7 +198,7 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		end
 		
-		--disc PW:S tracking (part 2 of 2)
+		--Redirect events to the stat parser
 		if ( ev == "SPELL_ABSORBED" ) then
 			local abs_srcGUID, abs_spellID, abs_amount;
 			
@@ -183,46 +216,34 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 	
 			if ( abs_srcGUID == UnitGUID("Player") or summons[abs_srcGUID] ) then
 				if (abs_spellID == addon.DiscPriest.PowerWordShield ) then 
-					addon.DiscPriest.PWSTracker:Absorb(destGUID,abs_amount);
+					addon.DiscPriest.PWSTracker:Absorb(destGUID,abs_amount); --disc PW:S tracking (part 2 of 2)
 				elseif ( abs_spellID == addon.DiscPriest.SmiteAbsorb ) then
 					addon.DiscPriest:AbsorbSmite(destGUID,abs_amount);
 				elseif ( abs_spellID == addon.Shaman.EarthenWallTotem ) then
 					addon.Shaman:AbsorbEarthenWallTotem(destGUID,abs_amount);
 				end				
 			end	
-		end
-
-		
-		if ( ev == "SPELL_DAMAGE" or ev == "SPELL_PERIODIC_DAMAGE" ) then
-			--set current segment name (if not already set)
-			local segment = addon.SegmentManager:Get(0);
+		elseif ( ev == "SPELL_PERIODIC_DAMAGE" or ev == "SPELL_DAMAGE" ) then 
+			local segment = addon.SegmentManager:Get(0);--set current segment name (if not already set)
 			if ( not segment.nameSet ) then
 				destGUID = string.lower(destGUID);
 				if ( not destGUID:find("player") and not destGUID:find("pet") ) then
 					addon.SegmentManager:SetCurrentId(destName);
 				end
 			end
-			
-			--redirect event to the stat parser
-			if (sourceGUID == UnitGUID("Player")) then	
-				addon.StatParser:DecompDamageDone(amount,spellID);	
-			end
-		end
-	
-		if ( ev == "SWING_DAMAGE" ) then
-			if ( summons[sourceGUID] ) then --shadowfiend/mindbender
-				addon.StatParser:DecompDamageDone(spellID,addon.DiscPriest.PetAttack); --13th arg = amount
-			end
-		end
-	
-		--redirect spell events to the stat parsers.
-		if ( ev == "SPELL_PERIODIC_DAMAGE" or ev == "SPELL_DAMAGE" ) then 
 			if ( destGUID == UnitGUID("Player") ) then
 				addon.StatParser:DecompDamageTaken(amount);
 			end
+			if ( sourceGUID == UnitGUID("Player") ) then	
+				addon.StatParser:DecompDamageDone(amount,spellID);	
+			end
 		elseif ( ev == "SPELL_HEAL" or ev == "SPELL_PERIODIC_HEAL"  ) then
-			if ( (sourceGUID == UnitGUID("Player")) or summons[sourceGUID] ) then
+			if ( (sourceGUID == UnitGUID("Player") ) or summons[sourceGUID] ) then
 				addon.StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,amount-overhealing,overhealing);
+			end
+		elseif ( ev == "SWING_DAMAGE" ) then  --shadowfiend/mindbender
+			if ( summons[sourceGUID] ) then
+				addon.StatParser:DecompDamageDone(spellID,addon.DiscPriest.PetAttack); --13th arg = amount
 			end
 		end
 	end
@@ -260,12 +281,15 @@ end
 --[[----------------------------------------------------------------------------
 	Events
 ------------------------------------------------------------------------------]]
-addon.hsw:RegisterEvent("PLAYER_REGEN_DISABLED")
-addon.hsw:RegisterEvent("PLAYER_REGEN_ENABLED")
-addon.hsw:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-addon.hsw:RegisterEvent("PLAYER_ENTERING_WORLD")
-addon.hsw:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+addon.hsw:RegisterEvent("PLAYER_REGEN_DISABLED");
+addon.hsw:RegisterEvent("PLAYER_REGEN_ENABLED");
+addon.hsw:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
+addon.hsw:RegisterEvent("PLAYER_ENTERING_WORLD");
+addon.hsw:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
 addon.hsw:RegisterEvent("ENCOUNTER_START");
+addon.hsw:RegisterEvent("ENCOUNTER_END");
 addon.hsw:RegisterEvent("COMBAT_RATING_UPDATE");
 addon.hsw:RegisterEvent("GROUP_ROSTER_UPDATE");
-
+addon.hsw:RegisterEvent("CHALLENGE_MODE_COMPLETED");
+addon.hsw:RegisterEvent("CHALLENGE_MODE_RESET");
+addon.hsw:RegisterEvent("CHALLENGE_MODE_START");
