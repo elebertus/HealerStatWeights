@@ -115,7 +115,7 @@ addon.Druid.CenarionWardCast = 102351;
 
 --																I C H H V M L
 createSpellInfo(addon.Druid.TranquilityHeal,SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,_,T,T,T,T,T); --cant crit?
+createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,T,T,T,T,T,T); --can crit now 7/17/2018
 createSpellInfo(addon.Druid.Rejuvenation,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Germination,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.LifebloomHoT,	SpellType.DRUID,	T,T,T,T,T,T,T);
@@ -496,8 +496,11 @@ addon.DiscPriest.PowerWordShield = 17;
 addon.DiscPriest.PetAttack = -1000; --spellid not used by the game, just an identifier we can use internally
 addon.DiscPriest.LuminousBarrierAbsorb = 271446;
 
+addon.DiscPriest.HaloDamage = 120696;
+addon.DiscPriest.HolyNovaDamage = 132157;
+addon.DiscPriest.DivineStarDamage = 122128;
+
 addon.DiscPriest.ShadowFiendCast = 34433;
-addon.DiscPriest.HolyNovaCast = 132157;
 addon.DiscPriest.PenanceCast1 = 47540;
 addon.DiscPriest.PenanceCast2 = 47666;
 addon.DiscPriest.AtonementBuff = 194384;
@@ -522,13 +525,17 @@ createSpellInfo(addon.DiscPriest.PenanceCast1,			SpellType.DPRIEST,	T,T,_,T,T,T,
 createSpellInfo(addon.DiscPriest.PenanceCast2,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.Solace,				SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.PetAttack,				SpellType.DPRIEST,	T,T,T,T,T,T,_);
+createSpellInfo(addon.DiscPriest.HolyNovaDamage,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.HaloDamage,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
+createSpellInfo(addon.DiscPriest.DivineStarDamage,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
+
 
 createSpellInfo(addon.DiscPriest.ShadowFiendCast,		SpellType.IGNORED);
-createSpellInfo(addon.DiscPriest.HolyNovaCast,			SpellType.IGNORED);
 
 
-local function setTransfersToAtonement(id)
+local function setTransfersToAtonement(id,gracePeriod)
 	Spells[id].transfersToAtonement=true;
+	Spells[id].transfersToAtonementGracePeriod = gracePeriod;
 end
 
 setTransfersToAtonement(addon.DiscPriest.SmiteCast);
@@ -540,7 +547,11 @@ setTransfersToAtonement(addon.DiscPriest.PenanceCast2);
 setTransfersToAtonement(addon.DiscPriest.PetAttack);
 setTransfersToAtonement(addon.DiscPriest.Solace);
 
-setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
+setTransfersToAtonement(addon.DiscPriest.HaloDamage, 5.0);
+setTransfersToAtonement(addon.DiscPriest.DivineStarDamage, 5.0);
+setTransfersToAtonement(addon.DiscPriest.HolyNovaDamage, 0.5);
+
+--setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
 setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
 
 --[[----------------------------------------------------------------------------

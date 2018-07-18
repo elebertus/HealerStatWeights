@@ -247,7 +247,7 @@ end
 function Segment:SetupInstanceInfo(isBossFight)
 	local map_level, _, _ = C_ChallengeMode.GetActiveKeystoneInfo();
 	local map_id = C_ChallengeMode.GetActiveChallengeMapID();
-	local map_name = map_id and C_ChallengeMode.GetMapInfo(map_id) or "";	
+	local map_name = map_id and C_ChallengeMode.GetMapUIInfo and C_ChallengeMode.GetMapUIInfo(map_id) or "";	
 	local _,_,id = GetInstanceInfo();
 	
 	self.instance.id = map_id;

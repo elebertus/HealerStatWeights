@@ -37,8 +37,19 @@ end
 	Disc Priest Damage Event
 		- Generates atonement events in the atonement queue
 ------------------------------------------------------------------------------]]
+local lastTransfer = {}
+
 local function _DamageEvent(spellInfo,amount)
 	if ( spellInfo.transfersToAtonement ) then
+		if ( spellInfo.transfersToAtonementGracePeriod ) then
+			local curTime = GetTime();
+			
+			if ( not lastTransfer[spellInfo.spellID] or (curTime - lastTransfer[spellInfo.spellID]) > spellInfo.transfersToAtonementGracePeriod) then
+				lastTransfer[spellInfo.spellID] = curTime;
+			else
+				return; --too soon to xfer to atonement
+			end
+		end
 		local numAtonement = addon.DiscPriest.AtonementTracker.count;
 		atonementQueue:Enqueue(numAtonement,spellInfo);
 	end
@@ -58,25 +69,23 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		if ( event and event.data ) then
 			local cur_seg = addon.SegmentManager:Get(0);
 			local ttl_seg = addon.SegmentManager:Get("Total");
-			local fillerAlreadyAllocated = false;
 			if ( event.data.spellID == addon.DiscPriest.SmiteCast ) then
 				--add healing to smite bucket
 				cur_seg:IncSmiteAtonementHealing(heal);
 				ttl_seg:IncSmiteAtonementHealing(heal);
-				
-				--add healing to filler spells bucket
-				addon.StatParser:IncFillerHealing(heal);
-				fillerAlreadyAllocated=true;
 			end
-			
-			if ( not fillerAlreadyAllocated and addon.DiscPriest.AtonementTracker:UnitHasAtonementFromPWS(destUnit) ) then
-				--add non-smite atonement healing on PWS atonements to filler healing
+
+			if ( addon.DiscPriest.AtonementTracker:UnitHasAtonementFromPWS(destUnit) ) then
+				--attribute atonement healing on targets with atonement from PWS (for haste HPCT)
 				addon.StatParser:IncFillerHealing(heal);
 			end
-			
-			addon.StatParser:Allocate(ev,event.data,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,nil,event.L);
+
+			addon.StatParser:Allocate(ev,event.data,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,1.0,event.L);
 		end
 		return true; --skip normal computation of healing event
+	elseif ( ( spellInfo.spellID == addon.DiscPriest.ContritionHeal1 or spellInfo.spellID == addon.DiscPriest.ContritionHeal2) and addon.DiscPriest.AtonementTracker:UnitHasAtonementFromPWS(destUnit) ) then
+		--attribute contrition healing on targets with atonement from PWS (for haste HPCT)
+		addon.StatParser:IncFillerHealing(heal);
 	end
 	return false;
 end
@@ -179,7 +188,7 @@ function addon.DiscPriest:AbsorbSmite(destGUID,amount)
 	local f = addon.StatParser:GetParserForCurrentSpec();
 	
 	if ( spellInfo and u and f and amount and amount>0 ) then
-		addon.StatParser:IncHealing(amount,true,true);
+		addon.StatParser:IncHealing(amount,false,true); --not filler healing
 		addon.StatParser:Allocate("SPELL_ABSORBED",spellInfo,amount,0,u,f,addon.ply_sp,addon.ply_crt,addon.ply_crtbonus,addon.ply_hst,addon.ply_vrs,addon.ply_mst,0,0);
 	end
 end
@@ -249,7 +258,7 @@ function PWSTracker:Remove(destGUID,amount)
 					end
 				end
 			end
-			self[u] = nil;
+			--self[u] = nil;
 		end
 	end
 end

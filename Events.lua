@@ -91,10 +91,12 @@ end
 ------------------------------------------------------------------------------]]
 function addon.hsw:CHALLENGE_MODE_COMPLETED()
 	addon.MythicPlusActive=false;
+	self:ENCOUNTER_END(); --forcibly end encounter, in case we are still in combat & the event hasn't fired yet
 	addon:TryAddTotalInstanceSegmentToHistory();
 end
 function addon.hsw:CHALLENGE_MODE_RESET()
 	addon.MythicPlusActive=false;
+	self:ENCOUNTER_END(); --forcibly end encounter, in case we are still in combat & the event hasn't fired yet
 	addon:TryAddTotalInstanceSegmentToHistory();
 end
 function addon.hsw:CHALLENGE_MODE_START()
