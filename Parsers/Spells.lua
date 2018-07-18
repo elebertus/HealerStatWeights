@@ -152,9 +152,9 @@ local function RegrowthAbundanceManaCostMultiplier()
 	return 1.0;
 end
 
-setFillerSpell(addon.Druid.Regrowth, 	 0.28, RegrowthAbundanceManaCostMultiplier);
-setFillerSpell(addon.Druid.Rejuvenation, 0.22);
-setFillerSpell(addon.Druid.Germination,  0.22);
+setFillerSpell(addon.Druid.Regrowth, 	 0.028, RegrowthAbundanceManaCostMultiplier);
+setFillerSpell(addon.Druid.Rejuvenation, 0.022);
+setFillerSpell(addon.Druid.Germination,  0.022);
 
 
 
