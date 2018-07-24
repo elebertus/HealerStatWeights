@@ -558,13 +558,10 @@ setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
 	Shared Spells
 ------------------------------------------------------------------------------]]
 addon.Trinket = {};
-addon.Trinket.HighfathersMachinations = 253288
-addon.Trinket.EonarsEmeraldBlossom = 253288
-addon.Trinket.EonarsVerdantEmbrace = 257444
-addon.Trinket.IshkarFelshieldEmitter = 253277
-addon.Trinket.PrototypeDecimator = 255629;
-addon.Trinket.ShadowBlades = 257702;
-addon.Trinket.LegionBombardment = 257376;
+addon.Trinket.HighfathersMachinations = 253288;
+addon.Trinket.EonarsEmeraldBlossom = 253288;
+addon.Trinket.EonarsVerdantEmbrace = 257444;
+addon.Trinket.IshkarFelshieldEmitter = 253277;
 
 addon.Enchant = {};
 addon.Enchant.AncientPriestess = 228401;
@@ -574,13 +571,6 @@ createSpellInfo(addon.Trinket.HighfathersMachinations,	SpellType.SHARED,	_,T,_,_
 createSpellInfo(addon.Trinket.EonarsEmeraldBlossom,		SpellType.SHARED,	_,T,T,_,T,_,_);
 createSpellInfo(addon.Trinket.EonarsVerdantEmbrace,		SpellType.SHARED,	_,_,_,_,T,_,_);
 createSpellInfo(addon.Trinket.IshkarFelshieldEmitter,	SpellType.SHARED,	_,_,_,_,T,_,_);
-createSpellInfo(addon.Trinket.PrototypeDecimator,		SpellType.SHARED,	_,T,_,_,T,_,_);
-createSpellInfo(addon.Trinket.ShadowBlades,				SpellType.SHARED,	_,T,_,_,T,_,_);
-createSpellInfo(addon.Trinket.LegionBombardment,		SpellType.SHARED,	_,T,_,_,T,_,_);
-
-setTransfersToAtonement(addon.Trinket.PrototypeDecimator);
-setTransfersToAtonement(addon.Trinket.ShadowBlades);
-setTransfersToAtonement(addon.Trinket.LegionBombardment);
 
 --Enchants
 createSpellInfo(addon.Enchant.AncientPriestess, 		SpellType.SHARED,	T,T,T,_,T,_,_);
