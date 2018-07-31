@@ -61,23 +61,14 @@ function addon:SetupConversionFactors()
 		mastery_factor = 5/6;
 	end
 	
-	if ( addon:isBFA() ) then
-		local level = UnitLevel("Player");
-		level = math.max(level,110);
-		addon.CritConv 		= crt_cnv[level-110+1]*100;
-		addon.HasteConv 	= hst_cnv[level-110+1]*100;
-		addon.VersConv 		= vrs_cnv[level-110+1]*100;
-		addon.MasteryConv 	= mst_cnv[level-110+1]*100 * mastery_factor;
-		addon.LeechConv		= lee_cnv[level-110+1]*100;
-		addon.ManaPool 		= mna_cnv[level-110+1]*5;
-	else
-		addon.CritConv 		= 40000;
-		addon.HasteConv 	= 37500;
-		addon.VersConv 		= 47500;
-		addon.MasteryConv	= 40000 * mastery_factor;
-		addon.LeechConv 	= 23000;
-		addon.ManaPool		= 220000*5;
-	end
+	local level = UnitLevel("Player");
+	level = math.max(level,110);
+	addon.CritConv 		= crt_cnv[level-110+1]*100;
+	addon.HasteConv 	= hst_cnv[level-110+1]*100;
+	addon.VersConv 		= vrs_cnv[level-110+1]*100;
+	addon.MasteryConv 	= mst_cnv[level-110+1]*100 * mastery_factor;
+	addon.LeechConv		= lee_cnv[level-110+1]*100;
+	addon.ManaPool 		= mna_cnv[level-110+1]*5;
 end
 
 
@@ -415,9 +406,13 @@ end
 --[[----------------------------------------------------------------------------
 	DecompDamageTaken
 ------------------------------------------------------------------------------]]
-function StatParser:DecompDamageTaken(amt)
+function StatParser:DecompDamageTaken(amt,dontClamp)
 	amt = amt or 0;
-	amt = math.min(UnitHealthMax("Player"),amt);
+	
+	if not dontClamp then
+		amt = math.min(UnitHealthMax("Player"),amt);
+	end
+	
 	amt = amt / (addon.VersConv*2);
 	
 	--Add derivatives to current & total segments
@@ -434,7 +429,7 @@ end
 
 
 --[[----------------------------------------------------------------------------
-	IsCurrentSpecSupported - Check if current spec is supported 
+	IsCurrentSpecSupported - Check if current spec is supported
 ------------------------------------------------------------------------------]]
 function StatParser:IsCurrentSpecSupported()
 	local f = self:GetParserForCurrentSpec();

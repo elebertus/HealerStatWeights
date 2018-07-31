@@ -36,14 +36,8 @@ addon.BeaconCount = 0;
 
 local function hasBeacon(unit)
 	for i=1,40,1 do
-		local _,p,id;
+		local _,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
 
-		if ( addon:isBFA() ) then
-			_,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		end
-		
 		if ( not id ) then
 			break;
 		elseif (p == "player" and addon.BeaconBuffs[id]) then

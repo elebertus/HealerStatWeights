@@ -50,12 +50,7 @@ function BuffTracker:UpdatePlayerBuffs()
 	local found = {};
 	
 	for i=1,40,1 do
-		local _,c,expiration,id;
-		if ( addon:isBFA() ) then
-			_,_,c,_,_,expiration,_,_,_,id = UnitAura("Player",i);
-		else
-			_,_,_,c,_,_,expiration,_,_,_,id = UnitAura("Player",i);
-		end
+		local _,_,c,_,_,expiration,_,_,_,id = UnitAura("Player",i);
 
 		if ( not id ) then
 			break;

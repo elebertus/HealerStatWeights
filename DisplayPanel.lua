@@ -25,9 +25,9 @@ local vers_nodr = "";
 local pawn_pattern = [[( Pawn: v1: "%s": Class=%s, Spec=%s, Intellect=%.2f, CritRating=%.2f, HasteRating=%.2f, Versatility=%.2f, MasteryRating=%.2f, Leech=%.2f)]];
 local pawn_str_name = "%s-HSW-%s";
 local pawn_title = "Pawn String (Ctrl+A to select all, Ctrl+C to copy):";
-local pawn_dialog_name = "HSW_GETPAWNSTRING"
-local clearsegments_dialog_name = "HSW_CLEARALLSEGMENTS"
-local clearsegments_title = "Clear all segments?"
+local pawn_dialog_name = "HSW_GETPAWNSTRING";
+local clearsegments_dialog_name = "HSW_CLEARALLSEGMENTS";
+local clearsegments_title = "Clear all segments?";
 
 
 
@@ -172,7 +172,6 @@ end
 
 
 
-
 --[[----------------------------------------------------------------------------
     Msg - print a message to chat
 ------------------------------------------------------------------------------]]
@@ -211,6 +210,26 @@ function addon:Enabled()
     end
 
     return false;
+end
+
+
+
+--[[----------------------------------------------------------------------------
+    InRaidInstance - Check if we are in a raid instance
+------------------------------------------------------------------------------]]
+function addon:InRaidInstance()
+	local _,_,id = GetInstanceInfo(); 
+	return id and (id >= 14 and id <= 17);
+end
+
+
+
+--[[----------------------------------------------------------------------------
+    InMythicPlus - Check if we are in a mythic+ instance
+------------------------------------------------------------------------------]]
+function addon:InMythicPlus()
+	local _,_,id = GetInstanceInfo(); 
+	return id and (id == 8);
 end
 
 
@@ -261,8 +280,31 @@ function addon:GetPawnString()
     local class = UnitClass("Player");
     local specId = GetSpecialization();
     local title = string.format(pawn_str_name,class,(segment and segment.id or "Unknown"));
+    return self:GetPawnStringRaw(title,class,specId,int,crt,hst,vrs,mst,lee);
+end
+
+function addon:GetPawnStringRaw(title,class,specId,int,crt,hst,vrs,mst,lee)	
     return string.format(pawn_pattern,title,class,specId,int,crt,hst,vrs,mst,lee);
 end
+
+addon.PawnHistoryDialogName = pawn_dialog_name.."_HISTORY";
+StaticPopupDialogs[addon.PawnHistoryDialogName] = {
+    text = pawn_title,
+    button1 = OKAY,
+    button2 = CANCEL,
+    hasEditBox = true,
+	editBoxWidth = 600,
+	maxLetters = 9999,
+    OnShow = function (self, data)
+		local s = addon:GetPawnStringFromHistory();
+        print(s);
+        self.editBox:SetText(s)
+    end,
+    timeout = 0,
+    exclusive = 1,
+    hideOnEscape = 1,
+    whileDead = 1
+}
 
 StaticPopupDialogs[pawn_dialog_name] = {
     text = pawn_title,
@@ -321,10 +363,7 @@ function addon:StartFight(id)
 				self.HolyPriest.EOLTracker:EncounterStart();
 			end
 				
-            self.SegmentManager:Enqueue(id or "Unknown");
-            if ( id ) then
-                self.SegmentManager:SetCurrentId(id,true);
-            end
+            self.SegmentManager:Enqueue(id);
             
             --Set start time of total segment to match current segment
             local cur_seg = self.SegmentManager:Get(0);

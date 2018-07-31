@@ -55,6 +55,15 @@ local spec_labels = {
 	[270] = "Mistweaver Monk",
 	[256] = "Discipline Priest"
 }
+local class_id_lookup = {
+	["Restoration Druid"] = {class=11,spec=4},
+	["Discipline Priest"] = {class=5,spec=1},
+	["Holy Priest"] = {class=5,spec=2},
+	["Holy Paladin"] = {class=2,spec=1},
+	["Mistweaver Monk"] = {class=10,spec=2},
+	["Restoration Shaman"] = {class=7,spec=3},
+
+}
 
 
 --[[----------------------------------------------------------------------------
@@ -360,6 +369,12 @@ local options = {
 					order = 13,
 					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[mp5_label]); end,
 				},
+				createPawnStringFromHistory = {
+					name = "Create Pawn String",
+					type = "execute",
+					order = 14,
+					func = function() addon:CreatePawnStringFromHistory() end
+				}
 			}
 		}
 	}
@@ -401,26 +416,7 @@ end
 
 
 --[[----------------------------------------------------------------------------
-	isBFA() - temporary, for supporting 7.3.5 and 8.0 concurrently. 
-		      Remove for final release.
-------------------------------------------------------------------------------]]
-function addon:isBFA()
-	local _,_,_,b = GetBuildInfo();
-	return b >= 80000;
-end
-
-
-
---[[----------------------------------------------------------------------------
-	History - store/retrieve historical segments
-	
-	
-	self.instance.id = map_id;
-	self.instance.name = map_name;
-	self.instance.level = map_level;
-	self.instance.difficultyId = id;
-	self.instance.bossFight = isBossFight;
-	
+	History - store/retrieve historical segments	
 ------------------------------------------------------------------------------]]
 addon.History = addon.Queue.CreateHistoryQueue();
 addon.MythicPlusActive = false;
@@ -455,7 +451,12 @@ function addon:AddHistoricalSegment(segment)
         return
 	end
 	
-	if ( addon.MythicPlusActive ) then --try to merge this segment into the current running history
+	if ( self:InRaidInstance() and not segment.instance.bossFight ) then
+		--dont add trash fights while in a raid instance
+		return;
+	end
+	
+	if ( self.MythicPlusActive ) then --try to merge this segment into the current running history
 		mergeDungeonSegments(segment);
 	end
 	local info = segment:GetInstanceInfo();
@@ -465,11 +466,14 @@ function addon:AddHistoricalSegment(segment)
 	local m = math.floor(duration/60);
 	local s = math.floor(duration - m*60);
 	local t_str = m..":"..(s<10 and "0" or "")..s;
-	local resurg_add = self:IsRestoShaman() and (segment:GetManaRestoreValue()/addon.CritConv) or 0;
+	local resurg_add = self:IsRestoShaman() and (segment:GetManaRestoreValue()/self.CritConv) or 0;
     local i = GetSpecialization();
 	local specId = GetSpecializationInfo(i);
 	
-	h.tab = info.bossFight and "" or "    ";
+	local tab_str = "    ";
+	h.tab = info.bossFight and "" or tab_str;
+	h.tab = self.MythicPlusActive and h.tab..tab_str or h.tab;
+	
 	h[sgmt_label] = segment.id;
 	h[dur_label] = t_str;
 	h[cls_label] = spec_labels[specId] or "Unknown";
@@ -485,7 +489,114 @@ function addon:AddHistoricalSegment(segment)
 	h[lee_label] = segment.t.leech / segment.t.int;
 	h[mp5_label] = segment:GetMP5();
 	
-	addon.History:Enqueue(h,segment);
+	self.History:Enqueue(h,segment);
+end
+
+
+local pawnOptionsFrame;
+local pawnOptionsWidth = 220;
+function addon:GetPawnStringFromHistory()
+	local h = addon.History:Get(historySelected);
+	if not pawnOptionsFrame or not h then
+		return "";
+	end
+	local t = class_id_lookup[h[cls_label]];
+	local class = GetClassInfo(t.class);
+	local specId = t.spec;
+	
+	local int_key = int_label;
+	local hst_key = pawnOptionsFrame.haste_dropdown.selectedLabel;
+	local crt_key = pawnOptionsFrame.crit_dropdown.selectedLabel;
+	local vrs_key = pawnOptionsFrame.vers_dropdown.selectedLabel;
+	local mst_key = mst_label;
+	local lee_key = lee_label;
+	
+	return self:GetPawnStringRaw(h[sgmt_label],class,specId,h[int_key],h[crt_key],h[hst_key],h[vrs_key],h[mst_key],h[lee_key]);
+end
+
+function addon:CreatePawnStringFromHistory()
+	if not pawnOptionsFrame then
+		pawnOptionsFrame = CreateFrame("Frame","HSW_CPSFW",UIParent);
+		pawnOptionsFrame:SetWidth(pawnOptionsWidth);
+		pawnOptionsFrame:SetHeight(128);
+		pawnOptionsFrame:SetPoint("CENTER",0,0);
+		pawnOptionsFrame:SetFrameStrata("DIALOG");
+		pawnOptionsFrame:SetMovable(true);
+		pawnOptionsFrame:EnableMouse(true);
+		pawnOptionsFrame:RegisterForDrag("LeftButton");
+		pawnOptionsFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", 
+												edgeFile = "Interface/Tooltips/UI-Tooltip-Border", 
+												tile = true, tileSize = 16, edgeSize = 16, 
+												insets = { left = 4, right = 4, top = 4, bottom = 4 }});
+		pawnOptionsFrame:SetBackdropColor(0,0,0,1);
+
+			
+		local function addMenuButton(frame,label)
+			local info = UIDropDownMenu_CreateInfo();
+			info.checked = (label == frame.selectedLabel);
+			info.func = function() frame.selectedLabel = label; UIDropDownMenu_SetText(frame,label); CloseDropDownMenus(); end
+			info.text = label;
+			UIDropDownMenu_AddButton(info,1);
+		end
+		local function SetupDropdownMenu(labels)	
+			local dropdown = CreateFrame("Frame", "HSW_CPSFH_"..labels[1], pawnOptionsFrame, "UIDropDownMenuTemplate");
+			local function init(self,level)
+				if ( level == 1 ) then
+					for i,v in ipairs(labels) do
+						addMenuButton(dropdown,v);
+					end		
+				end	
+			end
+			
+			dropdown.selectedLabel = labels[1];
+			UIDropDownMenu_SetText(dropdown,labels[1]);
+			UIDropDownMenu_SetWidth(dropdown, pawnOptionsWidth-50, 8);
+			UIDropDownMenu_Initialize(dropdown,init);
+			return dropdown;
+		end;
+		
+		local haste_labels = {hst_label,hst2_label,hst3_label};
+		local crit_labels = {crt_label,crt2_label};
+		local vers_labels = {vrs_label,vrs2_label};
+		local haste_dropdown = SetupDropdownMenu(haste_labels);
+		haste_dropdown:ClearAllPoints();
+		haste_dropdown:SetPoint("TOPLEFT",0,-8);
+		pawnOptionsFrame.haste_dropdown = haste_dropdown;
+		
+		local crit_dropdown = SetupDropdownMenu(crit_labels);
+		crit_dropdown:ClearAllPoints();
+		crit_dropdown:SetPoint("TOPLEFT",0,-32);
+		pawnOptionsFrame.crit_dropdown = crit_dropdown;
+		
+		local vers_dropdown = SetupDropdownMenu(vers_labels);
+		vers_dropdown:ClearAllPoints();
+		vers_dropdown:SetPoint("TOPLEFT",0,-56);
+		pawnOptionsFrame.vers_dropdown = vers_dropdown;
+		
+		
+		local btn_cancel = CreateFrame("Button","HSW_CPSFH_Cancel",pawnOptionsFrame,"UIPanelButtonTemplate");
+		btn_cancel:SetPoint("BOTTOMRIGHT",-8,8);
+		btn_cancel:SetHeight(24);
+		btn_cancel:SetWidth(pawnOptionsWidth/2-16);
+		btn_cancel:SetNormalFontObject("GameFontNormalSmall");
+		btn_cancel:SetText("Cancel");
+		btn_cancel:SetScript("OnClick",function() 
+			pawnOptionsFrame:Hide();
+		end);
+		
+		local btn_accept = CreateFrame("Button","HSW_CPSFH_Accept",pawnOptionsFrame,"UIPanelButtonTemplate");
+		btn_accept:SetPoint("BOTTOMLEFT",8,8);
+		btn_accept:SetHeight(24);
+		btn_accept:SetWidth(pawnOptionsWidth/2-16);
+		btn_accept:SetNormalFontObject("GameFontNormalSmall");
+		btn_accept:SetText("Create!");
+		btn_accept:SetScript("OnClick",function()
+			pawnOptionsFrame:Hide();
+			StaticPopup_Show(addon.PawnHistoryDialogName);
+		end);
+	end
+	
+	pawnOptionsFrame:Show();
 end
 
 local function addExampleSegment()

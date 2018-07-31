@@ -289,15 +289,22 @@ end
 function Segment:Debug()
 	for k,v in pairs(self.t) do
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
-			print(k,"=",v)
+			print("t."..tostring(k),"=",v)
 		end
 	end
-
+	
+	for k,v in pairs(self.instance) do
+		if ( type(v) ~= "function" and type(v) ~= "table" ) then
+			print("instance."..tostring(k),"=",v)
+		end
+	end
+	
 	for k,v in pairs(self) do
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
 			print(k,"=",v)
 		end
 	end
+	
 	local mp5 = self:GetMP5();
 	local duration = self:GetDuration();
 	print("mp5",mp5);

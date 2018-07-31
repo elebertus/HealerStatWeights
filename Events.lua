@@ -8,7 +8,7 @@ addon.currentSegment=0;
 	Combat Start
 ------------------------------------------------------------------------------]]
 function addon.hsw:PLAYER_REGEN_DISABLED()
-	addon:StartFight(nil);
+	addon:StartFight(nil); 
 end
 
 
@@ -45,7 +45,7 @@ end
 
 
 --[[----------------------------------------------------------------------------
-	Spec Changed
+	PLAYER_SPECIALIZATION_CHANGED
 ------------------------------------------------------------------------------]]
 function addon.hsw:PLAYER_SPECIALIZATION_CHANGED()
 	addon:AdjustVisibility();
@@ -60,8 +60,11 @@ function addon.hsw:PLAYER_ENTERING_WORLD()
 	addon:SetupConversionFactors();
 	addon:SetupFrame();
 	addon:AdjustVisibility();
-	addon.MythicPlusActive=false;
-	addon:TryAddTotalInstanceSegmentToHistory();
+	
+	addon.MythicPlusActive = addon:InMythicPlus();
+	if not addon.MythicPlusActive then
+		addon:TryAddTotalInstanceSegmentToHistory();
+	end
 end
 
 
@@ -87,16 +90,16 @@ end
 
 
 --[[----------------------------------------------------------------------------
-	GROUP_ROSTER_UPDATE
+	MYTHIC PLUS EVENTS
 ------------------------------------------------------------------------------]]
 function addon.hsw:CHALLENGE_MODE_COMPLETED()
-	addon.MythicPlusActive=false;
 	self:ENCOUNTER_END(); --forcibly end encounter, in case we are still in combat & the event hasn't fired yet
+	addon.MythicPlusActive=false;
 	addon:TryAddTotalInstanceSegmentToHistory();
 end
 function addon.hsw:CHALLENGE_MODE_RESET()
-	addon.MythicPlusActive=false;
 	self:ENCOUNTER_END(); --forcibly end encounter, in case we are still in combat & the event hasn't fired yet
+	addon.MythicPlusActive=false;
 	addon:TryAddTotalInstanceSegmentToHistory();
 end
 function addon.hsw:CHALLENGE_MODE_START()
@@ -114,11 +117,7 @@ local summons = {};
 
 function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if ( addon.inCombat ) then
-		if ( addon:isBFA() ) then
-					  ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, arg19, _, _, arg22 = CombatLogGetCurrentEventInfo();
-		else	  
-			        _,ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, arg19, _, _, arg22 = unpack({...});
-		end
+		local ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, arg19, _, _, arg22 = CombatLogGetCurrentEventInfo();
 				
 		--Track healing amount of mana spent on casting filler spells (for mp5 calculation)
 		if ( sourceGUID == UnitGUID("Player") ) then
@@ -225,6 +224,9 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 					addon.Shaman:AbsorbEarthenWallTotem(destGUID,abs_amount);
 				end				
 			end	
+			if ( destGUID == UnitGUID("Player") ) then --include absorbed damage taken in vers DR calculations
+				addon.StatParser:DecompDamageTaken(abs_amount,true);
+			end
 		elseif ( ev == "SPELL_PERIODIC_DAMAGE" or ev == "SPELL_DAMAGE" ) then 
 			local segment = addon.SegmentManager:Get(0);--set current segment name (if not already set)
 			if ( not segment.nameSet ) then

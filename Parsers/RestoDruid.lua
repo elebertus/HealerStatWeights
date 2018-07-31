@@ -30,14 +30,8 @@ local hots = { --spells that count towards druid mastery stacks
 local function hotCount(unit)
 	local count = 0;
 	for i=1,40,1 do
-		local _,id;
-		
-		if ( addon:isBFA() ) then
-			_,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		end
-		
+		local _,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
+
 		if ( not id ) then
 			break;
 		elseif (p == "player" and hots[id]) then
@@ -58,11 +52,7 @@ local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)
 	
 	if ( spellInfo.spellID == addon.Druid.Regrowth ) then
 		local abundance = addon.BuffTracker:Get(addon.Druid.AbundanceBuff);
-		if ( addon:isBFA() ) then
-			C = C + (abundance * 0.06);
-		else
-			C = C + 0.4 + (abundance * 0.10);
-		end
+		C = C + (abundance * 0.06);
 	end
 	
 	return addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,nil);

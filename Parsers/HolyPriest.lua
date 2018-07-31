@@ -23,14 +23,8 @@ end
 
 local function hasEcho(unit) --return amount per tick of EoL or nil
 	for i=1,40,1 do
-		local _,p,id,amt;
-		
-		if ( addon:isBFA() ) then
-			  _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		end
-		
+		local _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
+
 		if ( not id ) then
 			break;
 		elseif (p == "player" and id == addon.HolyPriest.EchoOfLight ) then

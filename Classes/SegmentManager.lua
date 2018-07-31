@@ -47,7 +47,10 @@ end
 function SegmentManager:Enqueue(id)
 	self.front = self.front + 1;
 	self.segments[self.front] = addon.Segment.Create(id or "Unknown");
-	self:SetCurrentId(id or "Unknown");
+	
+	if ( id ) then
+		self:SetCurrentId(id or "Unknown",true);
+	end
 	
 	if ( SegmentManager:Size() > addon.hsw.db.global.maxSegments ) then
 		self:Dequeue();

@@ -69,10 +69,6 @@ function CastTracker:FinishCast(unit,n,spellID,_,a)
 		return;
 	end
 	
-	if not addon:isBFA() then
-		spellID = a;
-	end
-	
 	local curTime = GetTime();
 	local flag = false;
 		

@@ -135,8 +135,11 @@ function LBTracker:Remove(destGUID,amount)
 					local ME = t.masteryFlag and 1 or 0;
 					
 					if ( spellInfo and originalHeal and originalHeal>0 and f ) then
-						addon.StatParser:IncHealing(originalHeal,spellInfo.filler,true);
-						addon.StatParser:Allocate("SPELL_ABSORBED",spellInfo,originalHeal,0,u,f,t.SP,t.C,t.CB,t.H,t.V,t.M,ME,0);
+						local exclude_cds = addon.hsw.db.global.excludeRaidHealingCooldowns	--filter out raid cooldowns if we are excluding them
+						if ( not exclude_cds or (exclude_cds and not spellInfo.cd) ) then
+							addon.StatParser:IncHealing(originalHeal,spellInfo.filler,true);
+							addon.StatParser:Allocate("SPELL_ABSORBED",spellInfo,originalHeal,0,u,f,t.SP,t.C,t.CB,t.H,t.V,t.M,ME,0);
+						end
 					end
 				end
 			end
@@ -147,13 +150,7 @@ end
 
 local function hasLB(unit)
 	for i=1,40,1 do
-		local _,p,id,amt;
-		
-		if ( addon:isBFA() ) then
-			  _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		end
+		local _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
 		
 		if ( not id ) then
 			break;
@@ -265,14 +262,8 @@ end
 
 local function hasShield(unit)
 	for i=1,40,1 do
-		local _,p,id,amt;
-		
-		if ( addon:isBFA() ) then
-			  _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
-		end
-		
+		local _,_,_,_,_,_,p,_,_,id,_,_,_,_,_,amt = UnitAura(unit,i);
+
 		if ( not id ) then
 			break;
 		elseif (p == "player" and id == addon.DiscPriest.PowerWordShield ) then
@@ -314,6 +305,11 @@ function AtonementTracker:ApplyOrRefresh(destGUID)
 	end
 end
 
+
+function AtonementTracker:Count()
+	return self.count;
+end
+
 function AtonementTracker:Remove(destGUID)
 	local u = addon.UnitManager:Find(destGUID);
 	if ( u ) then
@@ -326,14 +322,8 @@ end
 
 local function hasAtonement(unit)
 	for i=1,40,1 do
-		local _,p,id;
-		
-		if ( addon:isBFA() ) then
-			  _,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		else
-			_,_,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
-		end
-		
+		local _,_,_,_,_,_,p,_,_,id = UnitAura(unit,i);
+
 		if ( not id ) then
 			break;
 		elseif (p == "player" and id == addon.DiscPriest.AtonementBuff ) then
