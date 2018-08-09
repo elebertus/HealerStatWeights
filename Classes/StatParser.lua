@@ -84,6 +84,33 @@ function addon:UpdatePlayerStats()
 	self.ply_mst = GetMasteryEffect() / 100;
 	self.ply_lee = GetLifesteal() / 100;
     
+	--Adjust for haste multiplier effects
+	local haste_multiplier = 1;
+	if ( addon.BuffTracker:Get(addon.BloodlustId)>0 or
+		 addon.BuffTracker:Get(addon.HeroismId)>0 or
+		 addon.BuffTracker:Get(addon.DrumsOfFuryId)>0 or
+		 addon.BuffTracker:Get(addon.TimewarpId)>0 or
+		 addon.BuffTracker:Get(addon.PrimalRageId)>0 ) then
+		haste_multiplier = haste_multiplier * 1.30;
+	end
+	if ( addon.BuffTracker:Get(addon.BerserkingId)>0 ) then
+		haste_multiplier = haste_multiplier * 1.15;
+	end
+	if ( addon.BuffTracker:Get(addon.Paladin.HolyAvenger)>0) then
+		haste_multiplier = haste_multiplier * 1.30;
+	end
+	self.ply_hst = math.max((1+self.ply_hst) / haste_multiplier - 1,0);
+	
+	--adjust for intellect multiplier effects
+	if ( addon.BuffTracker:Get(addon.ArcaneIntellectId)>0 ) then
+		self.IntConv = 1.05*1.1;
+	elseif ( addon.BuffTracker:Get(addon.ScrollOfIntellectId)>0 ) then
+		self.IntConv = 1.05*1.07;
+	else
+		self.IntConv = 1.05;
+	end
+	
+	--Adjust for crit bonus effects
 	local race = UnitRace("Player");
 	self.ply_crtbonus = 1;
 	if ( race == "Tauren") then
@@ -133,7 +160,9 @@ local function _Haste(ev,s,heal,destUnit,H,f)
 	if ( f and f.Haste ) then
 		return f.Haste(ev,s,heal,destUnit,H);
 	end
-	
+	if not H then
+		return 0;
+	end
 	local canHPM = s.hstHPM or (s.hstHPMPeriodic and ev == "SPELL_PERIODIC_HEAL");
 	local canHPCT2 = canHPM and s.hstHPCT;
 	local canHPCT1 = canHPM or s.hstHPCT;
@@ -247,6 +276,30 @@ function StatParser:IncFillerHealing(heal)
 	end
 end
 
+function StatParser:IncBucket(key,amount)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	
+	if ( cur_seg ) then
+		cur_seg:IncBucket(key,amount);
+	end
+	if ( ttl_seg ) then
+		ttl_seg:IncBucket(key,amount);
+	end
+end
+
+function StatParser:IncChainSpellCast(spellID)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	
+	if ( cur_seg ) then
+		cur_seg:IncChainSpellCast(spellID);
+	end
+	if ( ttl_seg ) then
+		ttl_seg:IncChainSpellCast(spellID);
+	end
+end
+
 function StatParser:IncHealing(heal,updateFiller,updateTotal)
 	local cur_seg = addon.SegmentManager:Get(0);
 	local ttl_seg = addon.SegmentManager:Get("Total");
@@ -275,7 +328,7 @@ function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,
 	local _I,_C,_Hhpm,_Hhpct,_M,_V,_L = 0,0,0,0,0,0,0;
 
 	if ( HSW_ENABLE_FOR_TESTING ) then
-		addon:Msg("allocate spellid="..spellInfo.spellID.." destunit="..destUnit.." amount="..heal);
+		addon:Msg("allocate spellid="..(spellInfo.spellID or "unknown").." destunit="..destUnit.." amount="..heal);
 	end
 	
 	if (not OH) then --allocate effective healing
@@ -299,10 +352,10 @@ function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,
 						
 	--Add derivatives to current & total segments
 	if ( cur_seg ) then
-		cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+		cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID);
 	end
 	if ( ttl_seg ) then
-		ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L);
+		ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID);
 	end
 	
 	--update display to user
@@ -388,13 +441,13 @@ end
 --[[----------------------------------------------------------------------------
 	DecompDamageDone
 ------------------------------------------------------------------------------]]
-function StatParser:DecompDamageDone(amt,spellID)
+function StatParser:DecompDamageDone(amt,spellID,critFlag)
 	local f,specId = self:GetParserForCurrentSpec();
 	
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( spellInfo and (spellInfo.spellType == specId or spellInfo.spellType == addon.SpellType.SHARED) ) then
 		if ( f and f.DamageEvent ) then 
-			f.DamageEvent(spellInfo,amt);
+			f.DamageEvent(spellInfo,amt,critFlag);
 		end
 		
 		self:AllocateDamageLeech("SPELL_DAMAGE",spellInfo,amt,addon.ply_lee);
@@ -413,7 +466,12 @@ function StatParser:DecompDamageTaken(amt,dontClamp)
 		amt = math.min(UnitHealthMax("Player"),amt);
 	end
 	
-	amt = amt / (addon.VersConv*2);
+	local V = addon.ply_vrs/2;
+	if ( V >= 1 ) then
+		return 0;
+	end
+	
+	amt = amt / (1-V) / (addon.VersConv*2);
 	
 	--Add derivatives to current & total segments
 	local cur_seg = addon.SegmentManager:Get(0);

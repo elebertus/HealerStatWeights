@@ -49,16 +49,17 @@ function Segment.Create(id)
 	self.fillerHealing = 0;
 	self.fillerCasts = 0;
 	self.fillerInt = 0;
+	self.fillerHealingReduced = 0;
 	self.fillerManaSpent = 0; 
 	self.totalDuration = 0;
 	self.manaRestore = 0;
 	self.startTime = GetTime();
 	self.chainHaste = 0;
 	self.chainCasts = 0;
-	self.smiteCasts = 0;
-	self.smiteHealing = 0;
-	self.chainSmiteCasts = 0;
-	
+	self.debug = {};
+	self.casts = {};
+	self.buckets = {};
+	self.casts_hst = {};
 	self.instance = {};
 	self.instance.id = -1;
 	self.instance.name = "";
@@ -104,29 +105,36 @@ function Segment:GetHasteHPCT()
 		return self.t.haste_hpm;
 	end
 	
-	local avgFillerHealingPerCast = self.fillerHealing / self.fillerCasts;
-	local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
+	local hpct_est_added;
+	local hpct_upper_bound;
 	
-	local hpct_est_added = avgFillerHealingPerCast * self.chainCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
-	local haste_hpct = math.min(self.t.haste_hpm+hpct_est_added, self.t.haste_hpct);
+	if ( addon:IsDiscPriest() ) then
+		local xfer_casts,xfer_H,_ = self:GetBucketInfo(addon.DiscPriest.CastXfer);
+		local applicator_casts,applicator_H,_ = self:GetBucketInfo(addon.DiscPriest.CastApplicator);
+		local sm_casts,sm_H,sm_amt = self:GetBucketInfo(addon.DiscPriest.CastShadowMend);
+		local _,_,pws_amt = self:GetBucketInfo(addon.DiscPriest.CastPWS);
+		local _,_,smite_amt = self:GetBucketInfo(addon.DiscPriest.CastSmite); 
+		
+		local pws_added = (applicator_casts-sm_casts) * pws_amt / ( 1 + applicator_H ) / addon.HasteConv;
+		local sm_added = sm_casts * sm_amt / ( 1 + sm_H ) / addon.HasteConv;
+		local xfer_added = xfer_casts * smite_amt / ( 1 + xfer_H) / addon.HasteConv;
+		
+		hpct_est_added = pws_added + sm_added + xfer_added;
+		hpct_upper_bound = 2*self.t.haste_hpct;
+	else
+		local avgFillerHealingPerCast = (self.fillerHealing-self.fillerHealingReduced) / self.fillerCasts;
+		local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
+		
+		hpct_est_added = avgFillerHealingPerCast * self.chainCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
+		hpct_upper_bound = self.t.haste_hpct;
+	end
+	
+	local haste_hpct = math.min(self.t.haste_hpm+hpct_est_added, hpct_upper_bound);
 	return haste_hpct;
 end
 
 function Segment:GetHaste()
-	if ( addon:IsDiscPriest() ) then
-		if ( not self.smiteCasts or self.smiteCasts == 0 ) then
-			return self.t.haste_hpm;
-		end
-		
-		local avgSmiteHeal = self.smiteHealing/self.smiteCasts;
-		local avgHasteDuringChainCasts = self.chainHaste / self.chainCasts;
-	
-		local haste_est_added = avgSmiteHeal * self.chainSmiteCasts / ( 1 + avgHasteDuringChainCasts ) / addon.HasteConv;
-		
-		return self.t.haste_hpm + haste_est_added;
-	else
-		return self.t.haste_hpm;
-	end
+	return math.min(self.t.haste_hpm,addon:IsDiscPriest() and 2*self.t.haste_hpct or self.t.haste_hpct);
 end
 
 
@@ -149,7 +157,7 @@ end
 --[[----------------------------------------------------------------------------
 	AllocateHeal - increment cumulative healing totals for the given stats
 ------------------------------------------------------------------------------]]
-function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech)
+function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech,spellId)
 	self.t.int		 	= self.t.int		 + int;
 	self.t.crit			= self.t.crit	 	 + crit;
 	self.t.haste_hpm	= self.t.haste_hpm	 + haste_hpm;
@@ -158,6 +166,10 @@ function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech)
 	self.t.vers_dr  	= self.t.vers_dr	 + vers;
 	self.t.mast 	 	= self.t.mast		 + mast;
 	self.t.leech 	 	= self.t.leech	 	 + leech;
+	
+	if HSW_ENABLE_FOR_TESTING and spellId then
+		self.debug[spellId] = self.debug[spellId] and self.debug[spellId]+int or int;
+	end
 end
 
 
@@ -210,18 +222,6 @@ function Segment:IncFillerHealing(amount)
 	self.fillerHealing = self.fillerHealing + amount;
 end
 
-function Segment:IncChainSmiteCasts()
-	self.chainSmiteCasts = self.chainSmiteCasts + 1;
-end
-
-function Segment:IncSmiteCasts()
-	self.smiteCasts = self.smiteCasts + 1;
-end
-
-function Segment:IncSmiteAtonementHealing(amt)
-	self.smiteHealing = self.smiteHealing + amt;
-end
-
 function Segment:IncFillerCasts(manaCost)
 	self.fillerCasts = self.fillerCasts + 1;
 	self.fillerManaSpent = self.fillerManaSpent + manaCost;
@@ -232,11 +232,33 @@ function Segment:IncManaRestore(amount)
 	self.manaRestore = self.manaRestore + amount;
 end
 
+
+
+--[[----------------------------------------------------------------------------
+	Auxiliary data (Buckets)
+------------------------------------------------------------------------------]]
 function Segment:IncBucket(key,amount)
-	if not self[key] then
-		self[key] = 0;
+	if not self.buckets[key] then
+		self.buckets[key] = 0;
 	end
-	self[key] = self[key]+amount;
+	self.buckets[key] = self.buckets[key]+amount;
+end
+
+function Segment:IncChainSpellCast(key)
+	if not self.casts[key] then
+		self.casts[key] = 1;
+		self.casts_hst[key] = addon.ply_hst;
+	else 
+		self.casts[key] = self.casts[key] + 1;
+		self.casts_hst[key] = self.casts_hst[key] + addon.ply_hst;
+	end
+end
+
+function Segment:GetBucketInfo(key)
+	local casts = self.casts[key] or 0;
+	local haste_avg = casts>0 and self.casts_hst[key] and (self.casts_hst[key]/casts) or 0;
+	local bucket_avg = casts>0 and self.buckets[key] and (self.buckets[key]/casts) or 0;
+	return casts,haste_avg,bucket_avg;
 end
 
 
@@ -265,12 +287,28 @@ end
 	MergeSegment - merge information from another segment into this one.
 				 - only call this after both segments have Ended with segment:End()
 ------------------------------------------------------------------------------]]
-function Segment:MergeSegment(other)
-	for k,v in pairs(self.t) do
-		if ( type(v) == "number" ) then
-			self.t[k] = self.t[k] + other.t[k];
+function Segment:MergeSegmentHelper(other,tableKey)
+	local keys = {};
+	for k,v in pairs(self[tableKey]) do 
+		if type(v) == "number" then
+			keys[k] = true;
 		end
 	end
+	for k,v in pairs(other[tableKey]) do
+		if type(v) == "number" then
+			keys[k] = true;
+		end
+	end
+	for k,_ in pairs(keys) do
+		self[tableKey][k] = (self[tableKey][k] or 0) + (other[tableKey][k] or 0);
+	end
+end
+	
+function Segment:MergeSegment(other)
+	self:MergeSegmentHelper(other,"t");
+	self:MergeSegmentHelper(other,"casts");
+	self:MergeSegmentHelper(other,"casts_hst");
+	self:MergeSegmentHelper(other,"buckets");
 	
 	for k,v in pairs(self) do
 		if ( type(v) == "number" ) then
@@ -303,6 +341,11 @@ function Segment:Debug()
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
 			print(k,"=",v)
 		end
+	end
+	
+	print("---int spellid buckets---");
+	for k,v in pairs(self.debug) do
+		print(k,"=",v);
 	end
 	
 	local mp5 = self:GetMP5();

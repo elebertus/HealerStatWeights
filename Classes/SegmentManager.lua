@@ -101,7 +101,7 @@ end
 	SetId - Update the name of the current segment & instance info
 ------------------------------------------------------------------------------]]
 function SegmentManager:SetCurrentId(newId,isBossFight)
-	if ( newId ~= "Unknown" and newId ~= "Total" and not self.segments[self.front].nameSet ) then
+	if ( newId and newId ~= "Unknown" and newId ~= "Total" and not self.segments[self.front].nameSet ) then
 		self.segments[self.front]:SetupInstanceInfo(isBossFight);
 		ids[newId] = ( ids[newId] or 0 ) + 1;
 		if ( ids[newId] > 1 ) then

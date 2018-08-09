@@ -14,7 +14,7 @@ end
 	hotCount() - get the resto druid mastery effect (hotcount)
 ------------------------------------------------------------------------------]]
 local hots = { --spells that count towards druid mastery stacks
-	[addon.Druid.TranquilityHoT]=true,
+	[addon.Druid.Tranquility]=true,
 	[addon.Druid.Rejuvenation]=true,
 	[addon.Druid.Germination]=true,
 	[addon.Druid.LifebloomHoT]=true,

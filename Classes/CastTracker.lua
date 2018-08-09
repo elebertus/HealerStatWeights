@@ -21,17 +21,13 @@ function CastTracker:IncChainCasts(spellID)
 	
 	if ( cur_seg ) then
 		cur_seg:IncChainCasts();
-		if ( spellID == addon.DiscPriest.SmiteCast ) then
-			cur_seg:IncChainSmiteCasts();
-		end
 	end
 	
 	if ( ttl_seg ) then
 		ttl_seg:IncChainCasts();
-		if ( spellID == addon.DiscPriest.SmiteCast ) then
-			cur_seg:IncChainSmiteCasts();
-		end
 	end
+	
+	addon.DiscPriest:CHAIN_CAST(spellID);
 end
 
 
@@ -44,8 +40,8 @@ function CastTracker:StartCast(unit,n)
 		return;
 	end
 	
-	local _, _, _, _, startTimeMS, endTimeMS, _, _, _, spellID = UnitCastingInfo("player");
-	
+	local _, _, _, startTimeMS, endTimeMS, _, _, _, spellID = UnitCastingInfo("player");
+
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( not spellInfo ) then
 		return;
@@ -71,7 +67,7 @@ function CastTracker:FinishCast(unit,n,spellID,_,a)
 	
 	local curTime = GetTime();
 	local flag = false;
-		
+	
 	local spellInfo = addon.Spells:Get(spellID);
 	if ( not spellInfo ) then
 		if ( HSW_ENABLE_FOR_TESTING ) then
@@ -89,7 +85,6 @@ function CastTracker:FinishCast(unit,n,spellID,_,a)
 		endcast = curTime;
 	else
 		local start,dur = GetSpellCooldown(spellID);
-		
 		if ( start > 0 ) then
 			if ( addon.BuffTracker:CompareTimestamps(curTime,endcast,leniancy) ) then
 				self:IncChainCasts(spellID);		

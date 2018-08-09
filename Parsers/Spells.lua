@@ -90,20 +90,15 @@ end
 	Resto Druid
 ------------------------------------------------------------------------------]]
 addon.Druid = {};
-addon.Druid.TranquilityHeal = 740;
-addon.Druid.TranquilityHoT = 157982;
+addon.Druid.Tranquility = 157982;
 addon.Druid.Rejuvenation = 774;
 addon.Druid.Germination = 155777;
 addon.Druid.LifebloomHoT = 33763;
 addon.Druid.LifebloomHeal = 33778;
 addon.Druid.Regrowth = 8936;
 addon.Druid.WildGrowth = 48438;
-addon.Druid.Dreamwalker = 189853;
-addon.Druid.NaturesEssence = 189800;
-addon.Druid.Effloresence = 145205;
+addon.Druid.Effloresence = 81269;
 addon.Druid.Swiftmend = 18562;
-addon.Druid.HealingTouch = 5185;
-addon.Druid.LivingSeed = 48500;
 addon.Druid.FrenziedRegen = 22842;
 addon.Druid.SpringBlossoms = 207386;
 addon.Druid.Cultivation = 200389;
@@ -114,20 +109,15 @@ addon.Druid.AbundanceBuff = 207383;
 addon.Druid.CenarionWardCast = 102351;
 
 --																I C H H V M L
-createSpellInfo(addon.Druid.TranquilityHeal,SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.TranquilityHoT,	SpellType.DRUID,	T,T,T,T,T,T,T); --can crit now 7/17/2018
+createSpellInfo(addon.Druid.Tranquility,	SpellType.DRUID,	T,T,_,T,T,T,T); --can crit now 7/17/2018
 createSpellInfo(addon.Druid.Rejuvenation,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Germination,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.LifebloomHoT,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.LifebloomHeal,	SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.Regrowth,		SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.WildGrowth,		SpellType.DRUID,	T,T,T,T,T,T,T);
-createSpellInfo(addon.Druid.Dreamwalker,	SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.NaturesEssence,	SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.Effloresence,	SpellType.DRUID,	T,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.Swiftmend,		SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.HealingTouch,	SpellType.DRUID,	T,T,_,T,T,T,T);
-createSpellInfo(addon.Druid.LivingSeed,		SpellType.DRUID,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.FrenziedRegen,	SpellType.DRUID,	_,_,_,T,T,T,_);
 createSpellInfo(addon.Druid.SpringBlossoms,	SpellType.DRUID,	T,T,T,_,T,T,T);
 createSpellInfo(addon.Druid.Cultivation,	SpellType.DRUID,	T,T,T,_,T,T,T);
@@ -139,10 +129,10 @@ createSpellInfo(addon.Druid.CenarionWardCast, SpellType.IGNORED);
 
 addon.BuffTracker:Track(addon.Druid.AbundanceBuff)
 
-setRaidCooldown(addon.Druid.TranquilityHeal);
-setRaidCooldown(addon.Druid.TranquilityHoT);
+setRaidCooldown(addon.Druid.Tranquility);
 
 setHasteHpmOnlyOnPeriodic(addon.Druid.Regrowth);
+setHasteHpmOnlyOnPeriodic(addon.Druid.Tranquility);
 
 local function RegrowthAbundanceManaCostMultiplier()
 	local s = addon.BuffTracker:Get(addon.Druid.AbundanceBuff)
@@ -216,8 +206,8 @@ createSpellInfo(addon.Shaman.Undulation,	 	SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.UnleashLife,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.WellSpring,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Ascendance,		SpellType.SHAMAN,	T,T,_,T,T,T,_);
-createSpellInfo(addon.Shaman.EarthenWallTotem,	SpellType.SHAMAN,	T,_,_,T,_,_,_);
-createSpellInfo(addon.Shaman.EarthShield,		SpellType.SHAMAN,	T,_,_,T,T,T,_); --int per hit; stamina overall
+createSpellInfo(addon.Shaman.EarthenWallTotem,	SpellType.SHAMAN,	T,_,_,T,_,_,_); --int per hit; stamina overall
+createSpellInfo(addon.Shaman.EarthShield,		SpellType.SHAMAN,	T,T,_,T,T,T,_);
 
 createSpellInfo(addon.Shaman.SpiritLink,		SpellType.IGNORED);
 createSpellInfo(addon.Shaman.CBTCast,			SpellType.IGNORED);
@@ -328,8 +318,7 @@ addon.Paladin.JudgementOfLight = 183811;
 addon.Paladin.BeaconOfLight = 53652;
 addon.Paladin.LayOnHands = 633;
 addon.Paladin.AvengingCrusader = 216371;
-
-
+addon.Paladin.HolyAvenger = 105809;
 addon.Paladin.HolyShockCast = 20473;
 addon.Paladin.HolyPrismCast = 114165;
 addon.Paladin.AuraMasteryCast = 31821;
@@ -377,7 +366,7 @@ setFillerSpell(addon.Paladin.HolyLight, 0.026);
 setFillerSpell(addon.Paladin.FlashOfLight, 0.044);
 setFillerSpell(addon.Paladin.LightOfTheMartyr, 0.014);
 
-
+addon.BuffTracker:Track(addon.Paladin.HolyAvenger);
 
 
 
@@ -494,7 +483,7 @@ addon.DiscPriest.SmiteCast = 585;
 addon.DiscPriest.SmiteAbsorb = 208771;
 addon.DiscPriest.PowerWordShield = 17;
 addon.DiscPriest.PetAttack = -1000; --spellid not used by the game, just an identifier we can use internally
-addon.DiscPriest.LuminousBarrierAbsorb = 271446;
+addon.DiscPriest.LuminousBarrierAbsorb = 271466;
 
 addon.DiscPriest.HaloDamage = 120696;
 addon.DiscPriest.HolyNovaDamage = 132157;
@@ -524,11 +513,10 @@ createSpellInfo(addon.DiscPriest.LuminousBarrierAbsorb,	SpellType.DPRIEST,	T,T,_
 createSpellInfo(addon.DiscPriest.PenanceCast1,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.PenanceCast2,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.Solace,				SpellType.DPRIEST,	T,T,_,T,T,T,T);
-createSpellInfo(addon.DiscPriest.PetAttack,				SpellType.DPRIEST,	T,T,T,T,T,T,_);
+createSpellInfo(addon.DiscPriest.PetAttack,				SpellType.DPRIEST,	T,T,_,T,T,T,_);
 createSpellInfo(addon.DiscPriest.HolyNovaDamage,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.HaloDamage,			SpellType.DPRIEST,	T,T,_,T,T,T,T);
 createSpellInfo(addon.DiscPriest.DivineStarDamage,		SpellType.DPRIEST,	T,T,_,T,T,T,T);
-
 
 createSpellInfo(addon.DiscPriest.ShadowFiendCast,		SpellType.IGNORED);
 
@@ -551,7 +539,6 @@ setTransfersToAtonement(addon.DiscPriest.HaloDamage, 5.0);
 setTransfersToAtonement(addon.DiscPriest.DivineStarDamage, 5.0);
 setTransfersToAtonement(addon.DiscPriest.HolyNovaDamage, 0.5);
 
---setFillerSpell(addon.DiscPriest.SmiteCast, 0.005);
 setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
 
 --[[----------------------------------------------------------------------------
@@ -559,12 +546,18 @@ setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
 ------------------------------------------------------------------------------]]
 addon.Trinket = {};
 addon.Trinket.HighfathersMachinations = 253288;
-addon.Trinket.EonarsEmeraldBlossom = 253288;
+addon.Trinket.EonarsEmeraldBlossom = 257442; -- 253288;
 addon.Trinket.EonarsVerdantEmbrace = 257444;
 addon.Trinket.IshkarFelshieldEmitter = 253277;
 
+addon.Potion = {};
+addon.Potion.Healthstone = 6262;
+
 addon.Enchant = {};
 addon.Enchant.AncientPriestess = 228401;
+
+--Potions																	I C H H V M L
+createSpellInfo(addon.Potion.Healthstone,				SpellType.SHARED,	_,_,_,_,T,_,_);
 
 --Trinkets																	I C H H V M L
 createSpellInfo(addon.Trinket.HighfathersMachinations,	SpellType.SHARED,	_,T,_,_,T,_,_);
@@ -572,7 +565,7 @@ createSpellInfo(addon.Trinket.EonarsEmeraldBlossom,		SpellType.SHARED,	_,T,T,_,T
 createSpellInfo(addon.Trinket.EonarsVerdantEmbrace,		SpellType.SHARED,	_,_,_,_,T,_,_);
 createSpellInfo(addon.Trinket.IshkarFelshieldEmitter,	SpellType.SHARED,	_,_,_,_,T,_,_);
 
---Enchants
+--Enchants																	I C H H V M L
 createSpellInfo(addon.Enchant.AncientPriestess, 		SpellType.SHARED,	T,T,T,_,T,_,_);
 
 
@@ -590,7 +583,23 @@ createSpellInfo(235967, SpellType.IGNORED); --velen's future sight (calculated f
 	Shared Buffs
 ------------------------------------------------------------------------------]]
 addon.VelensId = 235966;
-addon.BuffTracker:Track(addon.VelensId) --velen's future sight
+addon.BerserkingId = 26297;
+addon.BloodlustId = 2825;
+addon.HeroismId = 32182;
+addon.DrumsOfFuryId = 178207;
+addon.TimewarpId = 80353;
+addon.PrimalRageId = 264667;
+addon.ArcaneIntellectId = 1459;
+addon.ScrollOfIntellectId = 264760;
+addon.BuffTracker:Track(addon.VelensId)
+addon.BuffTracker:Track(addon.BerserkingId)
+addon.BuffTracker:Track(addon.BloodlustId)
+addon.BuffTracker:Track(addon.HeroismId)
+addon.BuffTracker:Track(addon.DrumsOfFuryId)
+addon.BuffTracker:Track(addon.TimewarpId)
+addon.BuffTracker:Track(addon.PrimalRageId)
+addon.BuffTracker:Track(addon.ArcaneIntellectId)
+addon.BuffTracker:Track(addon.ScrollOfIntellectId)
 
 addon.Spells = Spells;
 addon.SpellType = SpellType;

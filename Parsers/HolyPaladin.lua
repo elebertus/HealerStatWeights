@@ -19,7 +19,7 @@ local purityOfLight = 254332;
 addon.BuffTracker:Track(purityOfLight);
 addon.BuffTracker:Track(ruleOfLaw);  --ruleOfLaw
 addon.BuffTracker:Track(vindicator);  --vindicator (+25% CE)
-addon.BuffTracker:Track(avengingWrath);  --avenging wrath (+20% crit)
+addon.BuffTracker:Track(avengingWrath);  --avenging wrath (+30% crit)
 
 
 
@@ -64,9 +64,6 @@ end
 
 --[[----------------------------------------------------------------------------
 	Holy Paladin Critical Strike
-		- Crit chance modified by avenging wrath
-		- Crit effect modified by vindicator
-		- Crit chance doubled for holy shock
 ------------------------------------------------------------------------------]]
 local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)		
 	--vindicator
@@ -85,12 +82,12 @@ local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)
 
 	--wings
 	if ( addon.BuffTracker:Get(avengingWrath) > 0 ) then
-		C = C + 0.20;
+		C = C + 0.30;
 	end
 	
 	--holy shock
 	if ( spellInfo.spellID == addon.Paladin.HolyShock ) then
-		C = C * 2;
+		C = C + 0.30;
 	end
 
 	return addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,nil);
@@ -181,7 +178,7 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		if ( addon.BeaconUnits[UnitGUID(destUnit)] ) then
 			numBeacons = math.max(numBeacons - 1,0);
 		end
-		beaconHeals:Enqueue(numBeacons,spellInfo.filler,destUnit);
+		beaconHeals:Enqueue(numBeacons,spellInfo,destUnit);
 	elseif (spellInfo.spellID == addon.Paladin.BeaconOfLight) then
 		local event = beaconHeals:MatchHeal();
 		

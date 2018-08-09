@@ -117,7 +117,7 @@ local summons = {};
 
 function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if ( addon.inCombat ) then
-		local ts,ev,_,sourceGUID, _, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, arg19, _, _, arg22 = CombatLogGetCurrentEventInfo();
+		local ts,ev,_,sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellID,_, _, amount, overhealing, absorbed, critFlag, arg19, arg20, arg21, arg22 = CombatLogGetCurrentEventInfo();
 				
 		--Track healing amount of mana spent on casting filler spells (for mp5 calculation)
 		if ( sourceGUID == UnitGUID("Player") ) then
@@ -138,10 +138,6 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 					
 					if ( ttl_seg ) then
 						ttl_seg:IncFillerCasts(cost,spellInfo.manaCostAdjustmentMultiplier);
-					end
-					
-					if spellInfo.spellID == addon.DiscPriest.SmiteCast then
-						addon.DiscPriest:SmiteCastCounter();
 					end
 				end
 			end
@@ -230,16 +226,23 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif ( ev == "SPELL_PERIODIC_DAMAGE" or ev == "SPELL_DAMAGE" ) then 
 			local segment = addon.SegmentManager:Get(0);--set current segment name (if not already set)
 			if ( not segment.nameSet ) then
-				destGUID = string.lower(destGUID);
-				if ( not destGUID:find("player") and not destGUID:find("pet") ) then
+				local dest_str = string.lower(destGUID);
+				local src_str = string.lower(sourceGUID);
+				
+				local is_src_ply_or_pet = src_str:find("player") or src_str:find("pet");
+				local is_dest_ply_or_pet = dest_str:find("player") or dest_str:find("pet");
+				
+				if ( is_src_ply_or_pet and not is_dest_ply_or_pet ) then
 					addon.SegmentManager:SetCurrentId(destName);
+				elseif ( is_dest_ply_or_pet and not is_src_ply_or_pet ) then
+					addon.SegmentManager:SetCurrentId(sourceName);
 				end
 			end
 			if ( destGUID == UnitGUID("Player") ) then
 				addon.StatParser:DecompDamageTaken(amount);
 			end
 			if ( sourceGUID == UnitGUID("Player") ) then	
-				addon.StatParser:DecompDamageDone(amount,spellID);	
+				addon.StatParser:DecompDamageDone(amount,spellID,arg21);	
 			end
 		elseif ( ev == "SPELL_HEAL" or ev == "SPELL_PERIODIC_HEAL"  ) then
 			if ( (sourceGUID == UnitGUID("Player") ) or summons[sourceGUID] ) then
@@ -247,7 +250,7 @@ function addon.hsw:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		elseif ( ev == "SWING_DAMAGE" ) then  --shadowfiend/mindbender
 			if ( summons[sourceGUID] ) then
-				addon.StatParser:DecompDamageDone(spellID,addon.DiscPriest.PetAttack); --13th arg = amount
+				addon.StatParser:DecompDamageDone(spellID,addon.DiscPriest.PetAttack,critFlag); --13th arg = amount
 			end
 		end
 	end

@@ -1,4 +1,5 @@
 local name, addon = ...;
+local media = LibStub("LibSharedMedia-3.0");
 
 
 
@@ -205,7 +206,9 @@ function addon:Enabled()
                 ( id == 16 	and self.hsw.db.global.enabledInMythicRaids )       	or
                 ( id == 17  and self.hsw.db.global.enabledInLfrRaids ))            	then
                 return true;
-            end
+            elseif self.hsw.db.global.alwaysEnabled then
+				return true;
+			end
         end
     end
 
@@ -238,7 +241,7 @@ end
     AdjustVisibility - Show or hide the frame
 ------------------------------------------------------------------------------]]    
 function addon:AdjustVisibility()
-    if ( self:Enabled() ) then
+    if ( self:Enabled() or self.hsw.db.global.alwaysShow ) then
         self:Show();
     else
         self:Hide();
@@ -448,7 +451,12 @@ function addon:AdjustFontSizes()
     self.frame.textTitle:SetFont(p,self.hsw.db.global.fontSize+2,"OUTLINE");
 end
 
-
+function addon:AdjustFontColor()
+	local color = self.hsw.db.global.fontColor;
+	self.frame.textL:SetTextColor(color.r,color.g,color.b,color.a);
+	self.frame.textR:SetTextColor(color.r,color.g,color.b,color.a);
+	self.frame.textTitle:SetTextColor(color.r,color.g,color.b,color.a);
+end
 
 --[[----------------------------------------------------------------------------
     AdjustWidth - Change the width of the stat weights frame
@@ -466,13 +474,20 @@ end
 ------------------------------------------------------------------------------]]
 function addon:AdjustFonts()
     local p,s,f = self.frame.textL:GetFont();
-    self.frame.textL:SetFont(self.hsw.db.global.fontStr,s,f);
+	local str = addon.hsw.db.global.fontStr;
+	
+	local path = p;
+	if ( str ) then
+		path = media:Fetch("font", str);
+	end
+	
+    self.frame.textL:SetFont(path,s,f);
     
     p,s,f = self.frame.textR:GetFont();
-    self.frame.textR:SetFont(self.hsw.db.global.fontStr,s,f);
+    self.frame.textR:SetFont(path,s,f);
     
     p,s,f = self.frame.textTitle:GetFont();
-    self.frame.textTitle:SetFont(self.hsw.db.global.fontStr,s,f);
+    self.frame.textTitle:SetFont(path,s,f);
 end
 
 
@@ -579,7 +594,9 @@ function addon:SetupFrame()
         end
         self.frame = frame;
         
-        addon:SetupUnitEvents();
+		self:AdjustFontColor()
+		self:AdjustFonts()
+        self:SetupUnitEvents();
     end
 end
 

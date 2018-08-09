@@ -1,11 +1,21 @@
 local name,addon = ...;
 local hsw = LibStub("AceAddon-3.0"):NewAddon("HealerStatWeights", "AceConsole-3.0", "AceEvent-3.0")
-
+local media = LibStub("LibSharedMedia-3.0");
+local lsmlists = AceGUIWidgetLSMlists;
 
 
 --[[----------------------------------------------------------------------------
 Defaults
 ------------------------------------------------------------------------------]]
+local function Color(r,g,b,a)
+	local t = {};
+	t.r = r;
+	t.g = g;
+	t.b = b;
+	t.a = a or 1;
+	return t;
+end
+
 local defaults = {
 	global = {
 		excludeRaidHealingCooldowns=false,
@@ -26,7 +36,11 @@ local defaults = {
 		maxSegments=10,
 		back=0,
 		front=0,
-		historySize=100,
+		historySize=200,
+		alwaysShow=false,
+		alwaysEnabled=false,
+		fontColor=Color(1,1,1,1),
+		fontStr=false,
 		history={}
 	}
 }
@@ -130,19 +144,13 @@ local options = {
 					order = 7
 				},
 				showFrame = {
-					name = "Show Frame",
+					name = "Always Show Frame",
 					type = "toggle",
-					desc = "Show or hide the stat weights frame.",
+					desc = "This setting makes the frame ALWAYS show, regardless of content. By default, the frame only shows on enabled content.",
 					order = 8,
 					width = "full",
-					get = function(info) return addon.frameVisible end,
-					set = function(info,val)
-						if ( val ) then
-							addon:Show();
-						else
-							addon:Hide();
-						end
-					end
+					get = function(info) return hsw.db.global.alwaysShow end,
+					set = function(info,val) hsw.db.global.alwaysShow=val; addon:AdjustVisibility(); end
 				},
 				frameLocked = {
 					name = "Lock Frame",
@@ -195,73 +203,109 @@ local options = {
 					order = 12,
 					func = function() addon:ResetFramePosition() end
 				},
+				fontStr = {
+					type = "select",
+					name = "Font Type",
+					dialogControl = "LSM30_Font",
+					order = 13,
+					values = lsmlists.font,
+					get = function(info) return hsw.db.global.fontStr; end,
+					set = function(info,val) hsw.db.global.fontStr = val; addon:AdjustFonts() end
+				},
+				fontColor = {
+					name = "Font Color",
+					type = "color",
+					order = 14,
+					get = function(info) return hsw.db.global.fontColor.r,hsw.db.global.fontColor.g,hsw.db.global.fontColor.b,hsw.db.global.fontColor.a end,
+					set = function(info,r,g,b,a) 
+						hsw.db.global.fontColor = Color(r,g,b,a);
+						addon:AdjustFontColor(); 
+					end
+				},
 				headerContentAndDifficulty = {
 					name = "Content and Difficulty",
 					desc = "These settings control which content and difficulties to calculate statweights for.",
 					type = "header",
 					order = 20
 				},
-				enabledInNormalDungeons = {
-					name = "Dungeons (Normal)",
+				enabledAlways = {
+					name = "Always Enabled",
+					desc = "It's recommended to only use this addon for instanced PVE, but this setting allows you to run the addon for ANY content.",
 					type = "toggle",
 					order = 21,
 					width = "full",
+					get = function(info) return hsw.db.global.alwaysEnabled end,
+					set = function(info,val) hsw.db.global.alwaysEnabled = val; addon:AdjustVisibility(); end
+				},
+				enabledInNormalDungeons = {
+					name = "Dungeons (Normal)",
+					type = "toggle",
+					order = 22,
+					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInNormalDungeons end,
 					set = function(info,val) hsw.db.global.enabledInNormalDungeons = val; addon:AdjustVisibility(); end
 				},
 				enabledInHeroicDungeons = {
 					name = "Dungeons (Heroic)",
 					type = "toggle",
-					order = 22,
+					order = 23,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInHeroicDungeons end,
 					set = function(info,val) hsw.db.global.enabledInHeroicDungeons = val; addon:AdjustVisibility(); end
 				},
 				enabledInMythicDungeons = {
 					name = "Dungeons (Mythic)",
 					type = "toggle",
-					order = 23,
+					order = 24,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInMythicDungeons end,
 					set = function(info,val) hsw.db.global.enabledInMythicDungeons = val; addon:AdjustVisibility(); end
 				},
 				enabledInMythicPlusDungeons = {
 					name = "Dungeons (Mythic+)",
 					type = "toggle",
-					order = 24,
+					order = 25,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInMythicPlusDungeons end,
 					set = function(info,val) hsw.db.global.enabledInMythicPlusDungeons = val; addon:AdjustVisibility(); end
 				},
 				enabledInLfrRaids = {
 					name = "Raids (LFR)",
 					type = "toggle",
-					order = 25,
+					order = 26,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInLfrRaids end,
 					set = function(info,val) hsw.db.global.enabledInLfrRaids = val; addon:AdjustVisibility(); end
 				},
 				enabledInNormalRaids = {
 					name = "Raids (Normal)",
 					type = "toggle",
-					order = 26,
+					order = 27,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInNormalRaids end,
 					set = function(info,val) hsw.db.global.enabledInNormalRaids = val; addon:AdjustVisibility(); end
 				},
 				enabledInHeroicRaids = {
 					name = "Raids (Heroic)",
 					type = "toggle",
-					order = 27,
+					order = 28,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInHeroicRaids end,
 					set = function(info,val) hsw.db.global.enabledInHeroicRaids = val; addon:AdjustVisibility(); end
 				},
 				enabledInMythicRaids = {
 					name = "Raids (Mythic)",
 					type = "toggle",
-					order = 28,
+					order = 29,
 					width = "full",
+					disabled = function(info) return hsw.db.global.alwaysEnabled end,
 					get = function(info) return hsw.db.global.enabledInMythicRaids end,
 					set = function(info,val) hsw.db.global.enabledInMythicRaids = val; addon:AdjustVisibility(); end
 				}
@@ -327,13 +371,20 @@ local options = {
 					order = 7,
 					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[hst2_label]); end,
 				},
-				Hst3 = {
-					name = hst3_label,
+				mst = {
+					name = mst_label,
 					type = "input",
 					disabled = true,
 					order = 8,
-					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[hst3_label]); end,
+					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[mst_label]); end,
 				},
+				-- Hst3 = {
+					-- name = hst3_label,
+					-- type = "input",
+					-- disabled = true,
+					-- order = 8,
+					-- get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[hst3_label]); end,
+				-- },
 				Vrs = {
 					name = vrs_label,
 					type = "input",
@@ -348,31 +399,25 @@ local options = {
 					order = 10,
 					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[vrs2_label]); end,
 				},
-				mst = {
-					name = mst_label,
-					type = "input",
-					disabled = true,
-					order = 11,
-					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[mst_label]); end,
-				},
+
 				lee = {
 					name = lee_label,
 					type = "input",
 					disabled = true,
-					order = 12,
+					order = 11,
 					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[lee_label]); end,
 				},
 				mp5 = {
 					name = mp5_label,
 					type = "input",
 					disabled = true,
-					order = 13,
+					order = 12,
 					get = function(info) local h = addon.History:Get(historySelected); return string.format(num_pattern,h[mp5_label]); end,
 				},
 				createPawnStringFromHistory = {
 					name = "Create Pawn String",
 					type = "execute",
-					order = 14,
+					order = 13,
 					func = function() addon:CreatePawnStringFromHistory() end
 				}
 			}
@@ -555,7 +600,7 @@ function addon:CreatePawnStringFromHistory()
 			return dropdown;
 		end;
 		
-		local haste_labels = {hst_label,hst2_label,hst3_label};
+		local haste_labels = {hst_label,hst2_label};
 		local crit_labels = {crt_label,crt2_label};
 		local vers_labels = {vrs_label,vrs2_label};
 		local haste_dropdown = SetupDropdownMenu(haste_labels);
