@@ -8,7 +8,7 @@ local media = LibStub("LibSharedMedia-3.0");
 ------------------------------------------------------------------------------]]
 local pattern_title = "%s";
 local pattern_left = "Intellect\n"
-                  .. "Critical Strike\n"
+                  .. "Critical Strike%s\n"
                   .. "Haste%s\n"
                   .. "Versatility%s\n"
                   .. "Mastery\n"
@@ -22,7 +22,7 @@ local pattern_right = "%.2f\n"
 local haste_hpct = " (HPCT)";
 local haste_hpm = "";
 local vers_dr = " (DR)";
-local vers_nodr = "";
+local crit_resurg = " (R)";
 local pawn_pattern = [[( Pawn: v1: "%s": Class=%s, Spec=%s, Intellect=%.2f, CritRating=%.2f, HasteRating=%.2f, Versatility=%.2f, MasteryRating=%.2f, Leech=%.2f)]];
 local pawn_str_name = "%s-HSW-%s";
 local pawn_title = "Pawn String (Ctrl+A to select all, Ctrl+C to copy):";
@@ -55,11 +55,11 @@ end
     UpdateDisplayLabels - update the display to reflect current filter settings
 ------------------------------------------------------------------------------]]
 function addon:UpdateDisplayLabels()
-    local usingHPCT = not self.hsw.db.global.useHPMoverHPCT;
-    local usingVersDR = self.hsw.db.global.useVersDR;
+    local crit_suffix = (self.hsw.db.global.useCritResurg and self:IsRestoShaman()) and crit_resurg or "";
+    local haste_suffix = self.hsw.db.global.useHPMoverHPCT and haste_hpm or haste_hpct;
+    local vers_suffix = self.hsw.db.global.useVersDR and vers_dr or "";
     self.frame.textL:SetFormattedText(
-        pattern_left,usingHPCT and haste_hpct or haste_hpm,
-        usingVersDR and vers_dr or vers_nodr
+        pattern_left, crit_suffix, haste_suffix, vers_suffix
     );
 end
 
