@@ -55,7 +55,7 @@ end
     UpdateDisplayLabels - update the display to reflect current filter settings
 ------------------------------------------------------------------------------]]
 function addon:UpdateDisplayLabels()
-    local crit_suffix = self.hsw.db.global.useCritResurg and crit_resurg or "";
+    local crit_suffix = (self.hsw.db.global.useCritResurg and self:IsRestoShaman()) and crit_resurg or "";
     local haste_suffix = self.hsw.db.global.useHPMoverHPCT and haste_hpm or haste_hpct;
     local vers_suffix = self.hsw.db.global.useVersDR and vers_dr or "";
     self.frame.textL:SetFormattedText(
