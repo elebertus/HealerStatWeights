@@ -325,33 +325,46 @@ end
 	Debug - print internal values of this segment to chat
 ------------------------------------------------------------------------------]]
 function Segment:Debug()
+	local tbl_header = function() print("=======") end;
+	print("StatTable");
+	tbl_header();
 	for k,v in pairs(self.t) do
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
-			print("t."..tostring(k),"=",v)
+			print(string.format("t.%s = %.5f", k, v));
 		end
 	end
 	
+	print("InstanceInfo");
+	tbl_header();
 	for k,v in pairs(self.instance) do
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
-			print("instance."..tostring(k),"=",v)
+			print("instance."..tostring(k),"=",v);
 		end
 	end
 	
+	print("Metadata");
+	tbl_header();
 	for k,v in pairs(self) do
 		if ( type(v) ~= "function" and type(v) ~= "table" ) then
-			print(k,"=",v)
+			if (type(v) == "number") then
+				print(string.format("%s = %.5f", k, v));
+			else
+				print(k,"=",v);
+			end
 		end
 	end
 	
-	print("---int spellid buckets---");
+	print("Int SpellID Buckets");
+	tbl_header();
 	for k,v in pairs(self.debug) do
-		print(k,"=",v);
+		print(string.format("%s = %.5f", k, v));
+
 	end
 	
 	local mp5 = self:GetMP5();
 	local duration = self:GetDuration();
-	print("mp5",mp5);
-	print("duration",duration);
+	print("mp5 =",mp5);
+	print(string.format("duration = %.5f",duration));
 end
 
 addon.Segment = Segment;
