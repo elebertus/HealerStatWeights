@@ -9,6 +9,15 @@ function addon:IsRestoDruid()
 end
 
 
+--[[----------------------------------------------------------------------------
+	talents() - mark talents taken.
+------------------------------------------------------------------------------]]
+--[[
+addon.Druid.Talents.Stonebark = true
+]]
+
+
+
 
 --[[----------------------------------------------------------------------------
 	hotCount() - get the resto druid mastery effect (hotcount)
@@ -26,6 +35,10 @@ local hots = { --spells that count towards druid mastery stacks
 	[addon.Druid.DreamerHoT]=true,
 	[addon.Druid.FrenziedRegen]=true 
 }
+
+function addon.Druid:IsHOT(spellID)
+	return hots[spellID];
+end
 
 local function hotCount(unit)
 	local count = 0;

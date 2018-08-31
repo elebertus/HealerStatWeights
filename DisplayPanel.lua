@@ -354,8 +354,9 @@ StaticPopupDialogs[clearsegments_dialog_name] = {
 function addon:StartFight(id)
     if ( self:Enabled() ) then
         if ( not self.inCombat ) then
-            self:UpdatePlayerStats()
-            self.UnitManager:Cache()
+            self:UpdatePlayerStats();
+			self:UpdateAzeriteEquipment();
+            self.UnitManager:Cache();
 			if ( self:IsHolyPaladin() ) then
 				self:CountBeaconsAtStartOfFight();
 			elseif ( self:IsDiscPriest() ) then

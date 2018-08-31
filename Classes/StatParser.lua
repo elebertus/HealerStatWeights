@@ -74,6 +74,38 @@ end
 
 
 --[[----------------------------------------------------------------------------
+	UpdatePlayerEquipment - Cache information on players azerite traits
+------------------------------------------------------------------------------]]
+function addon:UpdateAzeriteEquipment()
+	local slots = {1,3,5};
+	local budgets = {1,0.75,1};
+	
+	self.AzeriteAugmentations:ClearActiveTraits()
+	for k,slot in pairs(slots) do
+		local inventoryLink = GetInventoryItemLink("player",slot);
+		local location = ItemLocation:CreateFromEquipmentSlot(slot);
+		if ( location ) then
+
+			local stats=GetItemStats(inventoryLink); 
+			local itemInt = stats and stats["ITEM_MOD_INTELLECT_SHORT"] or 0;
+			itemInt = itemInt / budgets[k];
+			
+			local azeriteItemDataSource = AzeriteEmpoweredItemDataSource:CreateFromItemLocation(location);
+			if ( itemInt and azeriteItemDataSource ) then
+				for i=1,4,1 do
+					local trait = AzeriteUtil.GetSelectedAzeritePowerInTier(azeriteItemDataSource,i);
+					if ( trait ) then
+						self.AzeriteAugmentations:SetActiveTrait(trait,itemInt);
+					end
+				end
+			end
+		end
+	end
+end
+
+
+
+--[[----------------------------------------------------------------------------
 	UpdatePlayerStats - Update stats for current player.
 ------------------------------------------------------------------------------]]
 function addon:UpdatePlayerStats()
@@ -321,7 +353,7 @@ function StatParser:IncHealing(heal,updateFiller,updateTotal)
 	end
 end
 
-function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,V,M,ME,L)
+function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,V,M,ME,L,intScalar)
 	local cur_seg = addon.SegmentManager:Get(0);
 	local ttl_seg = addon.SegmentManager:Get("Total");
 	local OH = overhealing>0
@@ -349,13 +381,23 @@ function StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,SP,C,CB,H,
 	else --overhealing with no velens buff, so only possible to attribute leech
 		_L	 			= _Leech(ev,spellInfo,heal,destUnit,L,f);
 	end
-						
+
+	--Azerite Scaling
+	local scalar;
+	if ( not intScalar ) then
+		scalar = addon.AzeriteAugmentations:GetAugmentationFactor(spellInfo.spellID,destUnit,ev);
+	else
+		scalar = intScalar;
+	end
+	local azeritePortion = _I*(1-scalar);
+	_I = _I * scalar;
+	
 	--Add derivatives to current & total segments
 	if ( cur_seg ) then
-		cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID);
+		cur_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID,azeritePortion);
 	end
 	if ( ttl_seg ) then
-		ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID);
+		ttl_seg:AllocateHeal(_I,_C,_Hhpm,_Hhpct,_V,_M,_L,spellInfo.spellID,azeritePortion);
 	end
 	
 	--update display to user

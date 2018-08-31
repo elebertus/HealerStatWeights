@@ -27,13 +27,7 @@ local function getStatTable()
 end
 
 --shallow table copy
-local function copy(t) 
-	local new_t = {};
-	local mt = getmetatable(t);
-	for k,v in pairs(t) do new_t[k] = v; end
-	setmetatable(new_t,mt);
-	return new_t;
-end
+local copy = addon.Util.CopyTable;
 
 
 
@@ -60,6 +54,7 @@ function Segment.Create(id)
 	self.casts = {};
 	self.buckets = {};
 	self.casts_hst = {};
+	self.azerite = {};
 	self.instance = {};
 	self.instance.id = -1;
 	self.instance.name = "";
@@ -157,7 +152,7 @@ end
 --[[----------------------------------------------------------------------------
 	AllocateHeal - increment cumulative healing totals for the given stats
 ------------------------------------------------------------------------------]]
-function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech,spellId)
+function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech,spellId,azeriteAdded)
 	self.t.int		 	= self.t.int		 + int;
 	self.t.crit			= self.t.crit	 	 + crit;
 	self.t.haste_hpm	= self.t.haste_hpm	 + haste_hpm;
@@ -169,6 +164,7 @@ function Segment:AllocateHeal(int,crit,haste_hpm,haste_hpct,vers,mast,leech,spel
 	
 	if HSW_ENABLE_FOR_TESTING and spellId then
 		self.debug[spellId] = self.debug[spellId] and self.debug[spellId]+int or int;
+		self.azerite[spellId] = self.azerite[spellId] and self.azerite[spellId]+azeriteAdded or azeriteAdded;
 	end
 end
 
@@ -358,9 +354,16 @@ function Segment:Debug()
 	tbl_header();
 	for k,v in pairs(self.debug) do
 		print(string.format("%s = %.5f", k, v));
-
 	end
 	
+	print("Azerite SpellID Buckets");
+	tbl_header();
+	for k,v in pairs(self.azerite) do
+		print(string.format("%s = %.5f", k, v));
+	end
+	
+	print("Calculated Values");
+	tbl_header();	
 	local mp5 = self:GetMP5();
 	local duration = self:GetDuration();
 	print("mp5 =",mp5);

@@ -136,6 +136,20 @@ setRaidCooldown(addon.Druid.Tranquility);
 setHasteHpmOnlyOnPeriodic(addon.Druid.Regrowth);
 setHasteHpmOnlyOnPeriodic(addon.Druid.Tranquility);
 
+--azerite 
+addon.Druid.GroveTending = 279793; --spell ids
+addon.Druid.FungalEssence = 272807;
+addon.Druid.AutumnLeaves = 274436;
+addon.Druid.Azerite = {}; --azerite trait ids
+addon.Druid.Azerite.RampantGrowth = 362;
+addon.Druid.Azerite.WakingDream = 363;
+
+createSpellInfo(addon.Druid.GroveTending,	SpellType.DRUID,	_,T,T,T,T,T,T);
+createSpellInfo(addon.Druid.FungalEssence,	SpellType.DRUID,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Druid.AutumnLeaves,	SpellType.DRUID,	_,T,_,T,T,T,T); --full amount on partial ticks
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Druid.Azerite.RampantGrowth,2.67,addon.Druid.Regrowth,0.30);
+--since yseras gift is ignored, we can also ignore WakingDream.
+
 local function RegrowthAbundanceManaCostMultiplier()
 	local s = addon.BuffTracker:Get(addon.Druid.AbundanceBuff)
 	if ( s and s > 0 ) then
@@ -147,7 +161,6 @@ end
 setFillerSpell(addon.Druid.Regrowth, 	 0.028, RegrowthAbundanceManaCostMultiplier);
 setFillerSpell(addon.Druid.Rejuvenation, 0.022);
 setFillerSpell(addon.Druid.Germination,  0.022);
-
 
 
 
@@ -190,7 +203,6 @@ addon.Shaman.ESTCast = 198838;
 addon.Shaman.APTCast = 207399;
 addon.Shaman.WellspringCast = 197995;
 
-
 --																	I C H H V M L
 createSpellInfo(addon.Shaman.HealingWave,		SpellType.SHAMAN,	T,T,_,T,T,T,T);
 createSpellInfo(addon.Shaman.Downpour,			SpellType.SHAMAN,	T,T,_,T,T,T,T);
@@ -232,6 +244,21 @@ setFillerSpell(addon.Shaman.HealingWave,0.018);
 setFillerSpell(addon.Shaman.HealingSurge,0.04);
 setFillerSpell(addon.Shaman.ChainHeal,0.05);
 
+--azerite
+addon.Shaman.SpoutingSpirits = 279505;
+addon.Shaman.SwellingStreams = 275499;
+addon.Shaman.OverflowingShores = 278095;
+addon.Shaman.SurgingTides = 279187; --absorption
+addon.Shaman.Azerite = {};
+addon.Shaman.Azerite.SoothingWaters = 138;
+--addon.Shaman.EbbAndFlow --ignoring for now.
+createSpellInfo(addon.Shaman.SpoutingSpirits,	SpellType.SHAMAN,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Shaman.SwellingStreams,	SpellType.SHAMAN,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Shaman.OverflowingShores,	SpellType.SHAMAN,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Shaman.SurgingTides,		SpellType.SHAMAN,	_,_,_,T,T,T,T);
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Shaman.Azerite.SoothingWaters,2.44,addon.Shaman.ChainHeal,1.05,{Timeout=0.667});
+
+
 
 
 --[[----------------------------------------------------------------------------
@@ -262,6 +289,7 @@ addon.HolyPriest.PoMCast = 33076;
 addon.HolyPriest.DivineStarCast = 110744;
 addon.HolyPriest.HaloCast = 120517;
 addon.HolyPriest.DivineHymnCast = 64843;
+
 
 --																		I C H H V M L
 createSpellInfo(addon.HolyPriest.Renew,				SpellType.HPRIEST,	T,T,_,T,T,_,T);
@@ -298,6 +326,42 @@ setFillerSpell(addon.HolyPriest.Heal, 0.017);
 setFillerSpell(addon.HolyPriest.BindingHeal, 0.017);
 setFillerSpell(addon.HolyPriest.FlashHeal, 0.028);
 setFillerSpell(addon.HolyPriest.PrayerOfHealing,0.045);
+
+
+--Azerite
+addon.HolyPriest.Azerite = {};
+addon.HolyPriest.Azerite.PrayerfulLitany = 228; --strategy:  store all PoH in a bucket until next echo application. On first echo application, allocate all the PoH from bucket, then empty bucket. Trait only applies to lowest pre-heal hp percent amongst the buckets.
+addon.HolyPriest.Azerite.PrayerfulLitanySpell = -addon.HolyPriest.Azerite.PrayerfulLitany; --Use dummy spellID so we can capture special case in holypriest.lua
+addon.HolyPriest.Azerite.BlessedSanctuary = 165;
+addon.HolyPriest.Azerite.BlessedSanctuarySpell = -addon.HolyPriest.Azerite.BlessedSanctuary; --Use dummy spellID so we can capture special case of main spell not affected, but echo is affected.
+addon.HolyPriest.Azerite.WordOfMending = 401;
+addon.HolyPriest.Azerite.EverlastingLight = 400;
+addon.HolyPriest.Azerite.PermeatingGlow = 114; 
+addon.HolyPriest.PermeatingGlowBuff = 272783;
+
+local function permeatingGlowScalar(unit)
+	if ( addon.Util.HasAuraFromPlayer(unit,addon.HolyPriest.PermeatingGlowBuff) ) then
+		return 1;
+	else
+		return 0;
+	end
+end
+
+local function blessedSanctuaryHealScalar()
+	return ( 1+addon.ply_vrs ) * ( 1+addon.ply_crt*addon.ply_crtbonus) * addon.ply_mst;
+end
+
+local function everlastingLightScalar(unit)
+	local mana = UnitPower("player",0);
+	local maxmana = UnitPowerMax("player",0);
+	return mana/maxmana;
+end
+
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.PermeatingGlow,1.83,addon.HolyPriest.FlashHeal,1.35,{ValueScalar = permeatingGlowScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.BlessedSanctuary,4.58,addon.HolyPriest.Azerite.BlessedSanctuarySpell,1.75*1.4,{HealScalar = blessedSanctuaryHealScalar}); --special case spellid is handled in healevent of holypriest.lua
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.WordOfMending,0.643,addon.HolyPriest.PrayerOfMending,0.438); 
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.EverlastingLight,3.05,addon.HolyPriest.Heal,1.60,{ValueScalar = everlastingLightScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.PrayerfulLitany,3.51,addon.HolyPriest.Azerite.PrayerfulLitanySpell,0.625); --only applies to lowest HP target, will be handled as special case in holypriest.lua
 
 
 
@@ -369,6 +433,27 @@ setFillerSpell(addon.Paladin.FlashOfLight, 0.044);
 setFillerSpell(addon.Paladin.LightOfTheMartyr, 0.014);
 
 addon.BuffTracker:Track(addon.Paladin.HolyAvenger);
+
+--Azerite
+addon.Paladin.RadiantIncandesence = 278147;
+addon.Paladin.GraceOfTheJusticar = 278785;
+addon.Paladin.MartyrsBreath = 273035;
+addon.Paladin.Azerite = {};
+addon.Paladin.Azerite.MomentOfCompassion = 188;
+addon.Paladin.Azerite.BreakingDawn = 394;
+
+createSpellInfo(addon.Paladin.RadiantIncandesence,	SpellType.PALADIN,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Paladin.GraceOfTheJusticar,	SpellType.PALADIN,	_,T,_,T,T,T,T);
+createSpellInfo(addon.Paladin.MartyrsBreath,		SpellType.PALADIN,	_,T,_,T,T,T,T);
+local function momentOfCompassionScalar(unit)
+	if addon.Util.HasAnyAuraFromPlayer(unit,addon.BeaconBuffs) then
+		return 1;
+	else
+		return 0;
+	end
+end
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Paladin.Azerite.MomentOfCompassion,0.8,addon.Paladin.FlashOfLight,1.25,{HealScalar=momentOfCompassionScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Paladin.Azerite.BreakingDawn,0.67,addon.Paladin.LightOfDawn,0.55);
 
 
 
@@ -460,9 +545,29 @@ end
 setFillerSpell(addon.Monk.Vivify, 0.035, LifeCyclesVivifyManaCostMultiplier);
 setFillerSpell(addon.Monk.EnvelopingMist, 0.052, LifeCyclesEnvelopingMistManaCostMultiplier);
 
+--Azerite
+addon.Monk.OverflowingMists = 197908;
+addon.Monk.BurstOfLife = 197908;
+addon.Monk.Azerite = {};
+addon.Monk.Azerite.FontOfLife = 386;
+addon.Monk.Azerite.InvigoratingBrew = 76;
+addon.Monk.Azerite.UpliftedSpirits = 387;
 
-
-
+addon.Monk.TFTBuff = 116680
+addon.BuffTracker:Track(addon.Monk.TFTBuff);
+local function invigoratingBrewScalar(unit)
+	local buff = addon.BuffTracker:Get(addon.Monk.TFTBuff);
+	if ( buff > 0 ) then
+		return 1;
+	else
+		return 0;
+	end
+end
+createSpellInfo(addon.Monk.OverflowingMists,		SpellType.MONK,	_,T,_,T,T,_,T);
+createSpellInfo(addon.Monk.BurstOfLife,				SpellType.MONK,	_,T,_,T,T,_,T);
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.FontOfLife,0.534,addon.Monk.EssenceFont,0.338,{Direct=true});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.InvigoratingBrew,3.05,addon.Monk.Vivify,0.95,{HealScalar=invigoratingBrewScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.UpliftedSpirits,1.1,addon.Monk.Vivify,0.95);
 
 
 --[[----------------------------------------------------------------------------
@@ -542,6 +647,66 @@ setTransfersToAtonement(addon.DiscPriest.DivineStarDamage, 5.0);
 setTransfersToAtonement(addon.DiscPriest.HolyNovaDamage, 0.5);
 
 setFillerSpell(addon.DiscPriest.PowerWordShield, 0.025);
+
+--Azerite!
+addon.DiscPriest.MomentOfRepose = 272776;
+addon.DiscPriest.DepthOfTheShadowsBuff = 275544;
+addon.DiscPriest.WealBuff = 275544;
+addon.DiscPriest.WoeBuff = 273310;
+addon.DiscPriest.Azerite = {};
+addon.DiscPriest.Azerite.GiftOfForgiveness = 397;
+addon.DiscPriest.Azerite.DepthOfTheShadows = 227;
+addon.DiscPriest.Azerite.EnduringLuminescence = 399;
+addon.DiscPriest.Azerite.WealAndWoe = 164;
+addon.DiscPriest.Azerite.ContemptuousHomility = 398;
+addon.BuffTracker:Track(addon.DiscPriest.DepthOfTheShadowsBuff);
+addon.BuffTracker:Track(addon.DiscPriest.WealBuff);
+addon.BuffTracker:Track(addon.DiscPriest.WoeBuff);
+
+local function giftOfForgivenessScalar(unit)
+	if (addon.DiscPriest.AtonementTracker:Count() >= 3) then
+		return 1;
+	else
+		return 0;
+	end
+end
+
+local function depthOfTheShadowsScalar(unit)
+	local c = addon.BuffTracker:Get(addon.DiscPriest.DepthOfTheShadowsBuff);
+	if ( c and c > 0 ) then
+		return c;
+	else
+		return 0;
+	end
+end
+
+local function woeScalar(unit)
+	local c = addon.BuffTracker:Get(addon.DiscPriest.WoeBuff);
+	if ( c and c > 0 ) then
+		return 1;
+	else
+		return 0;
+	end
+end
+
+local function wealScalar(unit)
+	local c = addon.BuffTracker:Get(addon.DiscPriest.WealBuff);
+	if ( c and c > 0 ) then
+		return 1;
+	else
+		return 0;
+	end
+end
+
+createSpellInfo(addon.DiscPriest.MomentOfRepose,		SpellType.DPRIEST,	_,T,_,T,T,T,T);
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.GiftOfForgiveness,0.91,addon.DiscPriest.SmiteCast,0.47,{HealScalar=giftOfForgivenessScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.DepthOfTheShadows,0.36,addon.DiscPriest.ShadowMendHeal,1.8,{HealScalar=depthOfTheShadowsScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.EnduringLuminescence,1.67,addon.DiscPriest.RadianceHeal,0.625);
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,1.65,addon.DiscPriest.SmiteCast,0.47,{HealScalar=woeScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,4.37,addon.DiscPriest.PowerWordShield,1.54,{HealScalar=wealScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.ContemptuousHomility,0.39,addon.DiscPriest.PenanceCast2,0.40);
+
+
 
 --[[----------------------------------------------------------------------------
 	Shared Spells

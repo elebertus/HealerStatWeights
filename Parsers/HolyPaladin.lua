@@ -178,7 +178,12 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		if ( addon.BeaconUnits[UnitGUID(destUnit)] ) then
 			numBeacons = math.max(numBeacons - 1,0);
 		end
-		beaconHeals:Enqueue(numBeacons,spellInfo,destUnit);
+		
+		--Pass azerite augmented scalar to beacon healing
+		local event = copy(spellInfo);
+		event.intScalar = addon.AzeriteAugmentations:GetAugmentationFactor(spellInfo.spellID,destUnit,ev);
+		
+		beaconHeals:Enqueue(numBeacons,event,destUnit);
 	elseif (spellInfo.spellID == addon.Paladin.BeaconOfLight) then
 		local event = beaconHeals:MatchHeal();
 		
@@ -187,7 +192,7 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 				addon.StatParser:IncFillerHealing(heal);
 			end
 			
-			addon.StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,event.ME,event.L);
+			addon.StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,event.ME,event.L,event.intScalar);
 		end
 		return true; --skip normal computation of healing event
 	end
