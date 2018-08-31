@@ -44,6 +44,7 @@ end
 		of light tick.
 ------------------------------------------------------------------------------]]
 local EOLTracker = {};
+local EOLIgnorePercent = {}; --0 means include, 1 means exclude
 local ticks_on_initial_application = 2;
 local ticks_on_refresh = 3;
 local EOLIntAzeriteScalars = {};
@@ -66,9 +67,15 @@ local function hasEcho(unit) --return amount per tick of EoL or nil
 	return false;
 end
 
-function EOLTracker:SetScalar(destUnit,scalar)
+function EOLTracker:SetScalar(destUnit,scalar) --scale intellect factor on next EOL application on this target
 	if ( destUnit ) then
 		EOLIntAzeriteScalars[destUnit] = scalar or 1;
+	end
+end
+
+function EOLTracker:SetIgnore(destUnit) --ignore EOL healing from next application on this target.
+	if ( destUnit ) then
+		EOLIgnorePercent[destUnit] = 1;
 	end
 end
 
@@ -84,8 +91,17 @@ function EOLTracker:Apply(destGUID)
 			intScalar = 1;
 		end
 	
+		local ignorePercent;
+		if ( EOLIgnorePercent[u] ) then
+			ignorePercent = EOLIgnorePercent[u];
+			EOLIgnorePercent = 0;
+		else
+			ignorePercent = 0;
+		end
+		
 		local amount = hasEcho(u) or 0;
 		self[u] = {
+			ignore = ignorePercent,
 			current = amount*ticks_on_initial_application,
 			SP = addon.ply_sp * intScalar,
 			C = addon.ply_crt,
@@ -109,9 +125,18 @@ function EOLTracker:Refresh(destGUID)
 			intScalar = 1;
 		end
 		
+		local ignorePercent;
+		if ( EOLIgnorePercent[u] ) then
+			ignorePercent = EOLIgnorePercent[u];
+			EOLIgnorePercent = 0;
+		else
+			ignorePercent = 0;
+		end
+		
 		local amount = hasEcho(u) or 0;
 		if not self[u] then
 			self[u] = {
+				ignore = ignorePercent,
 				current = amount*ticks_on_refresh,
 				SP = addon.ply_sp*intScalar,
 				C = addon.ply_crt,
@@ -125,6 +150,7 @@ function EOLTracker:Refresh(destGUID)
 			local before = ticks_on_refresh*amount-after;
 		
 			self[u].current = ticks_on_refresh*amount;
+			self[u].ignore = weighted_avg(self[u].ignore,before,ignorePercent,after)
 			self[u].SP = weighted_avg(self[u].SP,before,addon.ply_sp*intScalar,after);
 			self[u].C = weighted_avg(self[u].C,before,addon.ply_crt,after);
 			self[u].CB = weighted_avg(self[u].CB,before,addon.ply_crtbonus,after);
@@ -179,7 +205,8 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,sc
 		addon.HolyPriest.EOLTracker:HealedUnit(destUnit,heal+overhealing);
 		local t = addon.HolyPriest.EOLTracker:Get(destUnit);
 		if ( t ) then
-			addon.StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,t.SP,t.C,t.CB,t.H,t.V,t.M,nil,0);
+			local notIgnored = math.max(1-t.ignore,0);
+			addon.StatParser:Allocate(ev,spellInfo,heal*notIgnored,overhealing*notIgnored,destUnit,f,t.SP,t.C,t.CB,t.H,t.V,t.M,nil,0);
 			return true; --skip default allocation
 		end 
 	elseif ( spellInfo.spellID == addon.HolyPriest.PrayerOfHealing ) then
@@ -202,6 +229,11 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,sc
 		local echoIntScalar = addon.AzeriteAugmentations:GetAugmentationFactor(spellToCheck,destUnit);
 		EOLTracker:SetScalar(destUnit,echoIntScalar);			
 	end
+	
+	if ( spellInfo.cd and addon.hsw.db.global.excludeRaidHealingCooldowns) then
+		EOLTracker:SetIgnore(destUnit); --exclude EOL from raid cooldowns
+	end
+	
 	return false;
 end
 

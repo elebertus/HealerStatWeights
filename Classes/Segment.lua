@@ -352,22 +352,28 @@ function Segment:Debug()
 	
 	print("Int SpellID Buckets");
 	tbl_header();
+	local intMainSum = 0;
 	for k,v in pairs(self.debug) do
 		print(string.format("%s = %.5f", k, v));
+		intMainSum = intMainSum + v;
 	end
 	
 	print("Azerite SpellID Buckets");
 	tbl_header();
+	local intAzeriteSum = 0;
 	for k,v in pairs(self.azerite) do
 		print(string.format("%s = %.5f", k, v));
+		intAzeriteSum = intAzeriteSum + v;
 	end
 	
 	print("Calculated Values");
 	tbl_header();	
 	local mp5 = self:GetMP5();
 	local duration = self:GetDuration();
+	local azeritePercentOfInt = intAzeriteSum/(intMainSum+intAzeriteSum+0.0001)*100;
 	print("mp5 =",mp5);
 	print(string.format("duration = %.5f",duration));
+	print(string.format("azerite = %.5f",azeritePercentOfInt));
 end
 
 addon.Segment = Segment;

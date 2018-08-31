@@ -84,7 +84,7 @@ function addon:UpdateAzeriteEquipment()
 	for k,slot in pairs(slots) do
 		local inventoryLink = GetInventoryItemLink("player",slot);
 		local location = ItemLocation:CreateFromEquipmentSlot(slot);
-		if ( location ) then
+		if ( location and inventoryLink ) then
 
 			local stats=GetItemStats(inventoryLink); 
 			local itemInt = stats and stats["ITEM_MOD_INTELLECT_SHORT"] or 0;
@@ -433,43 +433,32 @@ function StatParser:DecompHealingForCurrentSpec(ev,destGUID,spellID,critFlag,hea
 			--make sure destGUID describes a valid unit (Exclude healing to pets/npcs)
 			local destUnit = addon.UnitManager:Find(destGUID);
 			if destUnit then 
-				local exclude_cds = addon.hsw.db.global.excludeRaidHealingCooldowns	--filter out raid cooldowns if we are excluding them
-				if ( not exclude_cds or (exclude_cds and not spellInfo.cd) ) then
-					local OH = overhealing and overhealing>0;
-					local cur_seg = addon.SegmentManager:Get(0);
-					local ttl_seg = addon.SegmentManager:Get("Total");
-					
-					--Track healing amount of filler spells vs overall healing. (For mp5 calculations)
-					if ( cur_seg ) then
-						cur_seg:IncTotalHealing(heal)
-						if ( spellInfo.filler ) then
-							cur_seg:IncFillerHealing(heal);
-						end
-					end
-					if ( ttl_seg ) then
-						ttl_seg:IncTotalHealing(heal)
-						if ( spellInfo.filler ) then
-							ttl_seg:IncFillerHealing(heal);
-						end
-					end
-					
-					--Reduce crit heals down to the non-crit amount
-					local orig_heal = heal;
-					if ( critFlag ) then
-						heal = heal / ( 1 + addon.ply_crtbonus );
-						overhealing = OH and overhealing / ( 1 + addon.ply_crtbonus ) or 0;
-					end
-
-					--Allow the class parser to do pre-computations on this heal event
-					local skipAllocate=false;
-					if ( f.HealEvent ) then
-						skipAllocate = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,orig_heal);
-					end
-										
-					--Allocate healing derivatives for each stat
-					if ( not skipAllocate ) then
-						self:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,addon.ply_sp,addon.ply_crt,addon.ply_crtbonus,addon.ply_hst,addon.ply_vrs,addon.ply_mst,nil,addon.ply_lee);
-					end
+				
+				--Reduce crit heals down to the non-crit amount
+				local OH = overhealing and overhealing>0;
+				local orig_heal = heal;
+				if ( critFlag ) then
+					heal = heal / ( 1 + addon.ply_crtbonus );
+					overhealing = OH and overhealing / ( 1 + addon.ply_crtbonus ) or 0;
+				end
+				
+				--Allow the class parser to do pre-computations on this heal event
+				local skipAllocate=false;
+				if ( f.HealEvent ) then
+					skipAllocate = f.HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,orig_heal);
+				end
+				
+				--filter out raid cooldowns if we are excluding them
+				if ( addon.hsw.db.global.excludeRaidHealingCooldowns and spellInfo.cd ) then
+					return;
+				end
+				
+				--Track healing amount of filler spells vs overall healing. (For mp5 calculations)
+				self:IncHealing(orig_heal,spellInfo.filler,true);
+				
+				--Allocate healing derivatives for each stat
+				if ( not skipAllocate ) then
+					self:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,addon.ply_sp,addon.ply_crt,addon.ply_crtbonus,addon.ply_hst,addon.ply_vrs,addon.ply_mst,nil,addon.ply_lee);
 				end
 			end
 		elseif ( not spellInfo ) then
