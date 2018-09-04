@@ -147,7 +147,7 @@ addon.Druid.Azerite.WakingDream = 363;
 createSpellInfo(addon.Druid.GroveTending,	SpellType.DRUID,	_,T,T,T,T,T,T);
 createSpellInfo(addon.Druid.FungalEssence,	SpellType.DRUID,	_,T,_,T,T,T,T);
 createSpellInfo(addon.Druid.AutumnLeaves,	SpellType.DRUID,	_,T,_,T,T,T,T); --full amount on partial ticks
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Druid.Azerite.RampantGrowth,2.67,addon.Druid.Regrowth,0.30);
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Druid.Azerite.RampantGrowth,2.67,addon.Druid.Regrowth,0.30,{Overtime=true});
 --since yseras gift is ignored, we can also ignore WakingDream.
 
 local function RegrowthAbundanceManaCostMultiplier()
@@ -389,6 +389,7 @@ addon.Paladin.HolyShockCast = 20473;
 addon.Paladin.HolyPrismCast = 114165;
 addon.Paladin.AuraMasteryCast = 31821;
 addon.Paladin.LightOfDawnCast = 85222;
+addon.Paladin.InfusionOfLight = 54149;
 
 --																	I C H H V M L
 createSpellInfo(addon.Paladin.BeaconOfLight,	SpellType.PALADIN,	T,T,_,T,T,T,_);
@@ -433,6 +434,7 @@ setFillerSpell(addon.Paladin.FlashOfLight, 0.044);
 setFillerSpell(addon.Paladin.LightOfTheMartyr, 0.014);
 
 addon.BuffTracker:Track(addon.Paladin.HolyAvenger);
+addon.BuffTracker:Track(addon.Paladin.InfusionOfLight);
 
 --Azerite
 addon.Paladin.RadiantIncandesence = 278147;
@@ -544,6 +546,8 @@ end
 
 setFillerSpell(addon.Monk.Vivify, 0.035, LifeCyclesVivifyManaCostMultiplier);
 setFillerSpell(addon.Monk.EnvelopingMist, 0.052, LifeCyclesEnvelopingMistManaCostMultiplier);
+setFillerSpell(addon.Monk.RenewingMist, 0.028);
+setFillerSpell(addon.Monk.GustOfMists, 0);
 
 --Azerite
 addon.Monk.OverflowingMists = 197908;

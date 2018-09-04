@@ -91,7 +91,7 @@ function addon:UpdateAzeriteEquipment()
 			itemInt = itemInt / budgets[k];
 			
 			local azeriteItemDataSource = AzeriteEmpoweredItemDataSource:CreateFromItemLocation(location);
-			if ( itemInt and azeriteItemDataSource ) then
+			if ( itemInt and azeriteItemDataSource and C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItem(location) ) then
 				for i=1,4,1 do
 					local trait = AzeriteUtil.GetSelectedAzeritePowerInTier(azeriteItemDataSource,i);
 					if ( trait ) then

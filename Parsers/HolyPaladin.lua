@@ -60,7 +60,19 @@ function addon:CountBeaconsAtStartOfFight()
 	end
 end
 
-
+local function _GetCritChance(C)
+	--wings
+	if ( addon.BuffTracker:Get(avengingWrath) > 0 ) then
+		C = C + 0.30;
+	end
+	
+	--holy shock
+	if ( spellInfo.spellID == addon.Paladin.HolyShock ) then
+		C = C + 0.30;
+	end
+	
+	return C
+end
 
 --[[----------------------------------------------------------------------------
 	Holy Paladin Critical Strike
@@ -79,16 +91,8 @@ local function _CriticalStrike(ev,spellInfo,heal,destUnit,C,CB)
 			CB = CB * 2;
 		end
 	end
-
-	--wings
-	if ( addon.BuffTracker:Get(avengingWrath) > 0 ) then
-		C = C + 0.30;
-	end
 	
-	--holy shock
-	if ( spellInfo.spellID == addon.Paladin.HolyShock ) then
-		C = C + 0.30;
-	end
+	C = _GetCritChance(C);
 
 	return addon.BaseParsers.CriticalStrike(ev,spellInfo,heal,destUnit,C,CB,nil);
 end
@@ -167,6 +171,26 @@ end
 
 
 --[[----------------------------------------------------------------------------
+	AllocateInfusionAddedHealing 
+	- account for crit benefit with flash of lights increased by infusion of light
+------------------------------------------------------------------------------]]
+local function _AllocateInfusionAddedHealing(heal)
+	local cur_seg = addon.SegmentManager:Get(0);
+	local ttl_seg = addon.SegmentManager:Get("Total");
+	local add = 0.4*heal / 1.4 / _GetCritChance(addon.ply_crt);
+	
+	--Add derivatives to current & total segments
+	if ( cur_seg ) then
+		cur_seg:AllocateHeal(0,add,0,0,0,0,0,addon.Paladin.FlashOfLight,0);
+	end
+	if ( ttl_seg ) then
+		cur_seg:AllocateHeal(0,add,0,0,0,0,0,addon.Paladin.FlashOfLight,0);
+	end
+end
+
+
+
+--[[----------------------------------------------------------------------------
 	healEvent 
 	- Track healing that feeds beacons
 ------------------------------------------------------------------------------]]
@@ -183,6 +207,11 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 		local event = copy(spellInfo);
 		event.intScalar = addon.AzeriteAugmentations:GetAugmentationFactor(spellInfo.spellID,destUnit,ev);
 		
+		if ( spellInfo.spellID == addon.Paladin.FlashOfLight and addon.BuffTracker:Get(addon.Paladin.InfusionOfLight) > 0 ) then
+			event.infusion = true;
+			_AllocateInfusionAddedHealing(heal);
+		end
+		
 		beaconHeals:Enqueue(numBeacons,event,destUnit);
 	elseif (spellInfo.spellID == addon.Paladin.BeaconOfLight) then
 		local event = beaconHeals:MatchHeal();
@@ -192,13 +221,16 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f)
 				addon.StatParser:IncFillerHealing(heal);
 			end
 			
+			if ( event.infusion ) then
+				_AllocateInfusionAddedHealing(heal);
+			end
+			
 			addon.StatParser:Allocate(ev,spellInfo,heal,overhealing,destUnit,f,event.SP,event.C,addon.ply_crtbonus,event.H,event.V,event.M,event.ME,event.L,event.intScalar);
 		end
 		return true; --skip normal computation of healing event
 	end
 	return false;
 end
-
 
 
 

@@ -17,6 +17,7 @@ local AzeriteAugmentations = {
 	Call this to setup an azerite trait augmenting an existing spellID. 
 	
 	The options table allows for some additional customization on the calculations:
+		options.Overtime --when true, excludes calculation on direct healing or damage events
 		options.Direct --when true, exclude calculation on non-direct healing or damage events
 		options.ValueScalar(targetUnit) --scale the azerite value added by a multiplicative factor. A return value of 0 is equivalent to no value added. A value of 1 is equivalent to full value added.
 		options.HealScalar(targetUnit) --scale the base healing by a multiplicative factor.
@@ -59,6 +60,8 @@ function AzeriteAugmentations:GetAugmentationFactor(spellID,targetUnit,ev)
 	local options = self.Options[traitID];
 	
 	if ( options and options.Direct and (ev=="SPELL_PERIODIC_HEAL" or ev=="SPELL_PERIODIC_DAMAGE")) then
+		return 1;
+	elseif ( options and options.Overtime and (ev=="SPELL_HEAL" or ev=="SPELL_DAMAGE")) then
 		return 1;
 	elseif ( self.Active[spellID] ) then
 		local azeriteAdded = 0;

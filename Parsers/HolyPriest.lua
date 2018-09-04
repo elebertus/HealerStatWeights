@@ -200,6 +200,9 @@ end
 		- Put POH events into a bucket, and handle them as a batch for PrayerfulLitany trait
 		- Pass Azerite contribution of augmented spells to Echo of Light (affects Intellect)
 ------------------------------------------------------------------------------]]
+local last_salvation_time = 0;
+local pom_applications_from_salvation = 0;
+
 local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,scalar)
 	if ( spellInfo.spellID == addon.HolyPriest.EchoOfLight ) then
 		addon.HolyPriest.EOLTracker:HealedUnit(destUnit,heal+overhealing);
@@ -230,8 +233,31 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,sc
 		EOLTracker:SetScalar(destUnit,echoIntScalar);			
 	end
 	
-	if ( spellInfo.cd and addon.hsw.db.global.excludeRaidHealingCooldowns) then
-		EOLTracker:SetIgnore(destUnit); --exclude EOL from raid cooldowns
+	--Handle ignoring contribution from raid healing cooldowns. (Divine Hymn & Salvation)
+	if ( addon.hsw.db.global.excludeRaidHealingCooldowns ) then
+		--exclude EOL from raid cooldowns
+		if ( spellInfo.cd ) then
+			EOLTracker:SetIgnore(destUnit); 
+		end
+		
+		--ignore renew/PoM from salvation. 
+		if ( spellInfo.spellID == addon.HolyPriest.Salvation ) then
+			last_salvation_time = GetTime();
+			pom_applications_from_salvation = 0;		
+		elseif ( spellInfo.spellID == addon.HolyPriest.Renew ) then --ignore next 15s of renew.
+			if ( GetTime()-last_salvation_time <= 15.33 ) then
+				if ( ev == "SPELL_HEAL" ) then --ignore EOL from direct portion of renew
+					EOLTracker:SetIgnore(destUnit);
+				end
+				return true;
+			end
+		elseif ( spellInfo.spellID == addon.HolyPriest.PrayerOfMending ) then --ignore next 30s of PoM (or until #applications*2 ticks of PoM)
+			pom_applications_from_salvation = math.max(0,pom_applications_from_salvation - 1);
+			if ( pom_applications_from_salvation > 0 and GetTime()-last_salvation_time <= 30.33 ) then
+				EOLTracker:SetIgnore(destUnit); --ignore EOL from POM as well
+				return true;
+			end
+		end
 	end
 	
 	return false;
