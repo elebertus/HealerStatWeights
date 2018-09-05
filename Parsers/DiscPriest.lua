@@ -65,6 +65,10 @@ local function _Mastery(ev,spellInfo,heal,destUnit,M,ME)
 		end
 		
 		if (ME == 1) then
+			--DISCIPLINE PRIEST MASTERY SNAPSHOT BUG
+			--if hotfixed, remove the next line!!!!!
+			M = addon.DiscPriest.AtonementTracker:TryGetUnitMasterySnapshot(destUnit)
+			
 			return heal / (1+M) / addon.MasteryConv;
 		end
 	end
@@ -365,6 +369,7 @@ addon.DiscPriest.PWSTracker = PWSTracker;
 local AtonementTracker = {
 	count=0,
 	chainCastApplications = {},
+	mastery = {},
 };
 
 function AtonementTracker:ApplyOrRefresh(destGUID)
@@ -374,6 +379,7 @@ function AtonementTracker:ApplyOrRefresh(destGUID)
 			self.count = self.count + 1;
 		end
 		self[u] = GetTime();
+		self.mastery[u] = addon.ply_mst; --store mastery at time of application
 		self.chainCastApplications[u] = nextAtonementApplicatorIsChainCast and addon.ply_hst or nil; --store haste at time of application
 		nextAtonementApplicatorIsChainCast = false;
 	end
@@ -392,6 +398,7 @@ function AtonementTracker:Remove(destGUID)
 		end
 		self[u] = nil
 		self.chainCastApplications[u] = nil;
+		self.mastery[u] = nil;
 	end
 end
 
@@ -422,6 +429,14 @@ function AtonementTracker:UnitHasAtonement(unit)
 		return true;
 	else
 		return false;
+	end
+end
+
+function AtonementTracker:TryGetUnitMasterySnapshot(unit)
+	if ( self.mastery[unit] ) then
+		return self.mastery[unit];
+	else
+		return addon.ply_mst;
 	end
 end
 

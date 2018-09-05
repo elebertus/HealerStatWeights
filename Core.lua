@@ -20,6 +20,7 @@ local defaults = {
 	global = {
 		excludeRaidHealingCooldowns=false,
 		useHPMoverHPCT=true,
+		autoAssignHasteSetting=true,
 		useVersDR=false,
 		useCritResurg=false,
 		fontSize=12,
