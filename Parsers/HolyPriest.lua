@@ -1,5 +1,5 @@
 local name, addon = ...;
-
+local _HealEvent;
 
 
 function addon:IsHolyPriest()
@@ -31,7 +31,7 @@ local function CheckPOHBuckets()
 	POHBuckets[lowest_i].useScalar=true;
 	
 	for _,t in pairs(POHBuckets) do
-		_HealEvent(t.ev,t.spellInfo,t.heal,t.overhealing,t.destUnit,t.f,true,t.useScalar and t.scalar or 1)
+		_HealEvent(t.ev,t.spellInfo,t.heal,t.overhealing,t.destUnit,t.f,t.heal,true,t.useScalar and t.scalar or 1)
 	end
 	
 	wipe(POHBuckets);
@@ -203,7 +203,7 @@ end
 local last_salvation_time = 0;
 local pom_applications_from_salvation = 0;
 
-local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,scalar)
+_HealEvent = function(ev,spellInfo,heal,overhealing,destUnit,f,origHeal,skipBucket,scalar)
 	if ( spellInfo.spellID == addon.HolyPriest.EchoOfLight ) then
 		addon.HolyPriest.EOLTracker:HealedUnit(destUnit,heal+overhealing);
 		local t = addon.HolyPriest.EOLTracker:Get(destUnit);
@@ -215,7 +215,7 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,sc
 	elseif ( spellInfo.spellID == addon.HolyPriest.PrayerOfHealing ) then
 		if ( not skipBucket ) then
 			local intScalar = addon.AzeriteAugmentations:GetAugmentationFactor(addon.HolyPriest.Azerite.PrayerfulLitanySpell,destUnit);
-			local targetHPPercent = (UnitHealth(destUnit)-heal)/UnitMaxHealth(destUnit);
+			local targetHPPercent = (UnitHealth(destUnit)-heal)/UnitHealthMax(destUnit);
 			table.insert(POHBuckets,{hpPercent=targetHPPercent,scalar=intScalar,ev=ev,spellInfo=spellInfo,heal=heal,overhealing=overhealing,destUnit=destUnit,f=f});
 			return true; --skip for now.
 		else --frombucket
@@ -228,7 +228,6 @@ local function _HealEvent(ev,spellInfo,heal,overhealing,destUnit,f,skipBucket,sc
 		if ( spellToCheck == addon.HolyPriest.Sanctify ) then
 			spellToCheck = addon.HolyPriest.Azerite.BlessedSanctuarySpell;
 		end
-		
 		local echoIntScalar = addon.AzeriteAugmentations:GetAugmentationFactor(spellToCheck,destUnit);
 		EOLTracker:SetScalar(destUnit,echoIntScalar);			
 	end

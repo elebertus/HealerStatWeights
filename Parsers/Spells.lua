@@ -354,14 +354,14 @@ end
 local function everlastingLightScalar(unit)
 	local mana = UnitPower("player",0);
 	local maxmana = UnitPowerMax("player",0);
-	return mana/maxmana;
+	return math.max(0,1-mana/maxmana);
 end
 
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.PermeatingGlow,1.83,addon.HolyPriest.FlashHeal,1.35,{ValueScalar = permeatingGlowScalar});
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.BlessedSanctuary,4.58,addon.HolyPriest.Azerite.BlessedSanctuarySpell,1.75*1.4,{HealScalar = blessedSanctuaryHealScalar}); --special case spellid is handled in healevent of holypriest.lua
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.WordOfMending,0.643,addon.HolyPriest.PrayerOfMending,0.438); 
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.EverlastingLight,3.05,addon.HolyPriest.Heal,1.60,{ValueScalar = everlastingLightScalar});
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.PrayerfulLitany,3.51,addon.HolyPriest.Azerite.PrayerfulLitanySpell,0.625); --only applies to lowest HP target, will be handled as special case in holypriest.lua
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.HolyPriest.Azerite.PrayerfulLitany,3.51,addon.HolyPriest.Azerite.PrayerfulLitanySpell,0.625); --only applies to lowest HP target, handled as special case in holypriest.lua
 
 
 
@@ -454,7 +454,7 @@ local function momentOfCompassionScalar(unit)
 		return 0;
 	end
 end
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Paladin.Azerite.MomentOfCompassion,0.8,addon.Paladin.FlashOfLight,1.25,{HealScalar=momentOfCompassionScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Paladin.Azerite.MomentOfCompassion,0.8,addon.Paladin.FlashOfLight,1.25,{ValueScalar=momentOfCompassionScalar});
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Paladin.Azerite.BreakingDawn,0.67,addon.Paladin.LightOfDawn,0.55);
 
 
@@ -570,7 +570,7 @@ end
 createSpellInfo(addon.Monk.OverflowingMists,		SpellType.MONK,	_,T,_,T,T,_,T);
 createSpellInfo(addon.Monk.BurstOfLife,				SpellType.MONK,	_,T,_,T,T,_,T);
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.FontOfLife,0.534,addon.Monk.EssenceFont,0.338,{Direct=true});
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.InvigoratingBrew,3.05,addon.Monk.Vivify,0.95,{HealScalar=invigoratingBrewScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.InvigoratingBrew,3.05,addon.Monk.Vivify,0.95,{ValueScalar=invigoratingBrewScalar});
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.Monk.Azerite.UpliftedSpirits,1.1,addon.Monk.Vivify,0.95);
 
 
@@ -703,11 +703,11 @@ local function wealScalar(unit)
 end
 
 createSpellInfo(addon.DiscPriest.MomentOfRepose,		SpellType.DPRIEST,	_,T,_,T,T,T,T);
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.GiftOfForgiveness,0.91,addon.DiscPriest.SmiteCast,0.47,{HealScalar=giftOfForgivenessScalar});
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.DepthOfTheShadows,0.36,addon.DiscPriest.ShadowMendHeal,1.8,{HealScalar=depthOfTheShadowsScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.GiftOfForgiveness,0.91,addon.DiscPriest.SmiteCast,0.47,{ValueScalar=giftOfForgivenessScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.DepthOfTheShadows,0.36,addon.DiscPriest.ShadowMendHeal,1.8,{ValueScalar=depthOfTheShadowsScalar});
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.EnduringLuminescence,1.67,addon.DiscPriest.RadianceHeal,0.625);
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,1.65,addon.DiscPriest.SmiteCast,0.47,{HealScalar=woeScalar});
-addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,4.37,addon.DiscPriest.PowerWordShield,1.54,{HealScalar=wealScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,1.65,addon.DiscPriest.SmiteCast,0.47,{ValueScalar=woeScalar});
+addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.WealAndWoe,4.37,addon.DiscPriest.PowerWordShield,1.54,{ValueScalar=wealScalar});
 addon.AzeriteAugmentations:TraitAugmentsSpell(addon.DiscPriest.Azerite.ContemptuousHomility,0.39,addon.DiscPriest.PenanceCast2,0.40);
 
 

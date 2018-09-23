@@ -53,32 +53,28 @@ function AzeriteAugmentations:SetActiveTrait(traitID,itemInt)
 end
 
 --[[
-Multiply intellect derivative by this factor to account for azerite augmentations which do not scale with intellect.
+	Multiply intellect derivative by this factor to account for azerite augmentations which do not scale with intellect.
 ]]
 function AzeriteAugmentations:GetAugmentationFactor(spellID,targetUnit,ev)
-	
-	local options = self.Options[traitID];
-	
-	if ( options and options.Direct and (ev=="SPELL_PERIODIC_HEAL" or ev=="SPELL_PERIODIC_DAMAGE")) then
-		return 1;
-	elseif ( options and options.Overtime and (ev=="SPELL_HEAL" or ev=="SPELL_DAMAGE")) then
-		return 1;
-	elseif ( self.Active[spellID] ) then
+	if ( self.Active[spellID] ) then
 		local azeriteAdded = 0;
 		for traitID,intVal in pairs(self.Active[spellID]) do
-			azeriteAdded = azeriteAdded + self:CalcAzeriteAdded(spellID,traitID,intVal,targetUnit);
+			print(spellID,traitID,intVal)
+			azeriteAdded = azeriteAdded + self:CalcAzeriteAdded(ev,spellID,traitID,intVal,targetUnit);
 		end	
 		
 		local baseHeal = self:CalcBaseHeal(spellID);
-		
-		return (baseHeal / (baseHeal+azeriteAdded));
+		local frac = (baseHeal / (baseHeal+azeriteAdded));
+		addon:Msg("AzeriteAugmentation on spell "..spellID.." is "..tostring(math.floor((1-frac)*1000)/10).."%.");
+		return frac;
 	end
 	
 	return 1.0;
 end
 
 
-function AzeriteAugmentations:CalcAzeriteAdded(spellID,traitID,intVal)
+
+function AzeriteAugmentations:CalcAzeriteAdded(ev,spellID,traitID,intVal,targetUnit)
 	--handle Timeouts
 	local options = self.Options[traitID] and self.Options[traitID][spellID] or {};
 	if ( options.Timeout and options.Timeout > 0 ) then
@@ -91,12 +87,17 @@ function AzeriteAugmentations:CalcAzeriteAdded(spellID,traitID,intVal)
 		else
 			return 0;
 		end
+	elseif ( options and options.Direct and (ev=="SPELL_PERIODIC_HEAL" or ev=="SPELL_PERIODIC_DAMAGE")) then
+		return 0;
+	elseif ( options and options.Overtime and (ev=="SPELL_HEAL" or ev=="SPELL_DAMAGE")) then
+		return 0;
 	end
 	
 	--handle custom Scalars
 	local scalar;
 	if ( options.ValueScalar ) then
 		scalar = options.ValueScalar(targetUnit);
+		print("valuescalar",scalar);
 	else
 		scalar = 1.0;
 	end

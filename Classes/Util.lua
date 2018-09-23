@@ -17,7 +17,6 @@ function Util.HasAuraFromPlayer(unit,auraID)
 			return true;
 		end
 	end
-	
 	return false;
 end
 
@@ -31,7 +30,6 @@ function Util.HasAnyAuraFromPlayer(unit,auraList)
 			return true;
 		end
 	end
-	
 	return false;
 end
 

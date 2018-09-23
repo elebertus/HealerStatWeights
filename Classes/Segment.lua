@@ -301,13 +301,18 @@ function Segment:MergeSegmentHelper(other,tableKey)
 end
 	
 function Segment:MergeSegment(other)
+	local skip = {
+		["totalDuration"]=true,
+		["startTime"]=true
+	}
+	
 	self:MergeSegmentHelper(other,"t");
 	self:MergeSegmentHelper(other,"casts");
 	self:MergeSegmentHelper(other,"casts_hst");
 	self:MergeSegmentHelper(other,"buckets");
 	
 	for k,v in pairs(self) do
-		if ( type(v) == "number" ) then
+		if ( type(v) == "number" and not skip[k] ) then
 			self[k] = self[k] + other[k];
 		end
 	end
